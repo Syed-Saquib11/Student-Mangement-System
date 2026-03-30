@@ -1,0 +1,121 @@
+<!-- ══════════════════════════════════════════════════════
+     COURSES PAGE FRAGMENT — injected by router.js
+     No <html>, <head>, <body>, no sidebar, no shell.
+     ══════════════════════════════════════════════════════ -->
+
+<div class="page-body">
+  <div class="courses-wrap">
+
+  <div class="courses-page-header">
+    <div>
+      <div class="section-eyebrow"><span></span>Curriculum</div>
+      <h1 class="section-title">Course <span class="accent">Syllabus</span></h1>
+      <p class="section-subtitle">A comprehensive curriculum covering essential computer skills — from fundamentals to advanced design and web concepts.</p>
+    </div>
+    <button class="btn-add-course" id="open-add-course-btn">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      Add Course
+    </button>
+  </div>
+
+  <div class="course-stats-row">
+    <div class="cs-card">
+      <div class="cs-icon" style="background:rgba(79,91,213,.1)">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4f5bd5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+      </div>
+      <div><div class="cs-val" id="stat-total">0</div><div class="cs-lbl">Total Modules</div></div>
+    </div>
+    <div class="cs-card">
+      <div class="cs-icon" style="background:rgba(251,146,60,.1)">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fb923c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </div>
+      <div><div class="cs-val" id="stat-topics">0</div><div class="cs-lbl">Topics</div></div>
+    </div>
+    <div class="cs-card">
+      <div class="cs-icon" style="background:rgba(30,201,158,.1)">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1ec99e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      </div>
+      <div><div class="cs-val" id="stat-custom">0</div><div class="cs-lbl">Custom Courses</div></div>
+    </div>
+    <div class="cs-card">
+      <div class="cs-icon" style="background:rgba(124,82,232,.1)">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7c52e8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </div>
+      <div><div class="cs-val" id="stat-levels">0</div><div class="cs-lbl">Levels</div></div>
+    </div>
+  </div>
+
+  <div id="added-section" style="display:none">
+    <div class="added-label">Custom Courses</div>
+    <div class="added-grid" id="added-grid"></div>
+  </div>
+
+  <div id="custom-hint" class="add-hint">
+    <div class="add-hint-icon">➕</div>
+    <div class="add-hint-title">Add a Custom Course</div>
+    <div class="add-hint-sub">Create your own module with topics, schedule and colour theme — saved to disk.</div>
+    <button class="btn-hint" id="hint-add-btn">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      Add New Course
+    </button>
+  </div>
+
+  </div>
+</div>
+
+<!-- ADD COURSE MODAL -->
+<div class="modal-overlay" id="add-course-modal" style="display:none">
+  <div class="modal">
+    <div class="modal-head">
+      <div><h2>Add New Course</h2><p>Fill in the details to create a new course module</p></div>
+      <button class="modal-close-btn" id="close-course-modal">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="preview-card" id="course-preview" style="display:none">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between">
+        <div><div class="pv-name" id="pv-name">Course Name</div><div class="pv-code" id="pv-code">COURSE-CODE</div></div>
+        <span class="pv-level" id="pv-level">Beginner</span>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field"><label>Course Name *</label><input type="text" id="ac-name" placeholder="e.g. Web Development" autocomplete="off"></div>
+      <div class="form-field"><label>Course Code *</label><input type="text" id="ac-code" placeholder="e.g. WD-101" autocomplete="off"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-field"><label>Level</label>
+        <select id="ac-level"><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select>
+      </div>
+      <div class="form-field"><label>Schedule Days</label><input type="text" id="ac-days" placeholder="e.g. Mon, Wed, Fri" autocomplete="off"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-field"><label>Time</label><input type="text" id="ac-time" placeholder="e.g. 9:00 AM" autocomplete="off"></div>
+      <div class="form-field"><label>Duration</label><input type="text" id="ac-dur" placeholder="e.g. 3 months" autocomplete="off"></div>
+    </div>
+    <div class="form-field"><label>Topics (one per line)</label>
+      <textarea id="ac-topics" rows="4" placeholder="MS Word&#10;MS Excel&#10;English Typing"></textarea>
+    </div>
+    <div class="form-field"><label>Card Colour Theme</label>
+      <div class="color-grid" id="color-grid"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="cancel-course-modal">Cancel</button>
+      <button class="btn btn-primary" id="submit-course">Add Course</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE MODAL -->
+<div class="modal-overlay" id="delete-course-modal" style="display:none">
+  <div class="modal modal-sm">
+    <div class="confirm-body">
+      <div style="font-size:44px;margin-bottom:14px">🗑️</div>
+      <h3>Remove this Course?</h3>
+      <p>This will permanently delete the course. This action cannot be undone.</p>
+    </div>
+    <div class="modal-actions" style="margin-top:22px">
+      <button class="btn btn-secondary" id="cancel-delete-course">Keep it</button>
+      <button class="btn btn-danger" id="confirm-delete-course">Yes, Remove</button>
+    </div>
+  </div>
+</div>

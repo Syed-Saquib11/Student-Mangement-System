@@ -1,0 +1,54 @@
+<div class="page-header">
+  <div>
+    <h2 class="page-title">Fees</h2>
+    <p class="page-subtitle" id="fees-subtitle">Loading fee records…</p>
+  </div>
+</div>
+
+<div class="page-body">
+  <div class="stats-row" id="fees-stats"></div>
+
+  <div class="toolbar" style="margin-top:16px;">
+    <div class="search-wrapper">
+      <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" class="search-input" id="fees-search" placeholder="Search student name or ID…" />
+    </div>
+    <div class="ml-auto flex gap-2">
+      <select class="form-select" id="fees-filter" style="width:160px">
+        <option value="">All Status</option>
+        <option value="paid">Paid</option>
+        <option value="pending">Pending</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="table-card" style="margin-top:12px;">
+    <div class="table-wrapper">
+      <table id="fees-table">
+        <thead>
+          <tr>
+            <th>Student ID</th>
+            <th>Name</th>
+            <th>Class</th>
+            <th>Phone</th>
+            <th>Fee Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="fees-tbody">
+          <tr><td colspan="6">
+            <div class="empty-state">
+              <div class="empty-state-icon">⏳</div>
+              <h3>Loading…</h3>
+            </div>
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-footer">
+      <span class="table-count" id="fees-count">—</span>
+    </div>
+  </div>
+</div>

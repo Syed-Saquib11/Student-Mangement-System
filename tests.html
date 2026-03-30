@@ -1,0 +1,55 @@
+<div class="page-header">
+  <div>
+    <h2 class="page-title">Tests &amp; Grades</h2>
+    <p class="page-subtitle" id="tests-subtitle">View and record student test scores</p>
+  </div>
+  <button class="btn btn-primary" id="btn-add-test">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+    Record Test
+  </button>
+</div>
+
+<div class="page-body">
+  <div class="stats-row" id="tests-stats"></div>
+
+  <div class="toolbar" style="margin-top:16px;">
+    <div class="search-wrapper">
+      <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" class="search-input" id="tests-search" placeholder="Search by student name or test…" />
+    </div>
+  </div>
+
+  <div class="table-card" style="margin-top:12px;">
+    <div class="table-wrapper">
+      <table id="tests-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Test Name</th>
+            <th>Date</th>
+            <th>Marks Obtained</th>
+            <th>Total Marks</th>
+            <th>Grade</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tests-tbody">
+          <tr><td colspan="7">
+            <div class="empty-state">
+              <div class="empty-state-icon">🎓</div>
+              <h3>No test records yet</h3>
+              <p>Click "Record Test" to add the first entry.</p>
+            </div>
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-footer">
+      <span class="table-count" id="tests-count">0 records</span>
+    </div>
+  </div>
+</div>

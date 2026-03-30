@@ -1,0 +1,66 @@
+<div class="page-header">
+  <div>
+    <h2 class="page-title">Student List</h2>
+    <p class="page-subtitle" id="students-subtitle">Loading…</p>
+  </div>
+  <div class="page-header-right">
+    <div class="student-chips" id="student-stats"></div>
+    <button class="btn btn-primary" id="btn-add-student">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Add Student
+    </button>
+  </div>
+</div>
+<div class="page-body">
+  <div class="toolbar">
+    <div class="search-wrapper">
+      <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" class="search-input" id="search-input" placeholder="Search by name, ID, course, mobile…" />
+    </div>
+    <div class="ml-auto flex gap-2">
+      <select class="form-select" id="filter-course" style="width:170px">
+        <option value="">All Courses</option>
+      </select>
+      <select class="form-select" id="filter-fee" style="width:160px">
+        <option value="">All Status</option>
+        <option value="paid">Paid</option>
+        <option value="pending">Pending</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="table-card" id="student-table-card">
+    <div class="table-wrapper">
+      <table id="students-table">
+        <thead>
+          <tr>
+            <th class="col-photo">PHOTO</th>
+            <th class="col-id">ID</th>
+            <th class="col-name">NAME</th>
+            <th class="col-roll">ROLL NO</th>
+            <th class="col-course">COURSE</th>
+            <th class="col-slot">SLOT</th>
+            <th class="col-fee">FEE STATUS</th>
+            <th class="col-edit">EDIT</th>
+            <th class="col-action">ACTION</th>
+          </tr>
+        </thead>
+        <tbody id="students-tbody">
+          <tr><td colspan="9">
+            <div class="empty-state">
+              <div class="empty-state-icon">⏳</div>
+              <h3>Loading students…</h3>
+            </div>
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-footer">
+      <span class="table-count" id="table-count">—</span>
+    </div>
+  </div>
+</div>

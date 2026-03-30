@@ -1,0 +1,72 @@
+<div class="page-header">
+  <div>
+    <h2 class="page-title">Forms &amp; Documents</h2>
+    <p class="page-subtitle">Generate printable forms for students</p>
+  </div>
+</div>
+
+<div class="page-body">
+  <!-- Document type cards -->
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:16px; margin-top:8px;">
+
+    <div class="card" style="padding:24px; text-align:center; cursor:pointer;" id="form-card-admission">
+      <div style="font-size:36px; margin-bottom:12px;">📋</div>
+      <div style="font-weight:700; font-size:15px; margin-bottom:6px;">Admission Form</div>
+      <div style="color:var(--text-secondary); font-size:13px; margin-bottom:16px;">Generate a blank or pre-filled admission form for any student.</div>
+      <button class="btn btn-primary" style="width:100%;" id="btn-gen-admission">Generate</button>
+    </div>
+
+    <div class="card" style="padding:24px; text-align:center; cursor:pointer;" id="form-card-idcard">
+      <div style="font-size:36px; margin-bottom:12px;">🪪</div>
+      <div style="font-weight:700; font-size:15px; margin-bottom:6px;">Student ID Card</div>
+      <div style="color:var(--text-secondary); font-size:13px; margin-bottom:16px;">Print a student ID card with name, ID, and class details.</div>
+      <button class="btn btn-primary" style="width:100%;" id="btn-gen-idcard">Generate</button>
+    </div>
+
+    <div class="card" style="padding:24px; text-align:center;" id="form-card-fee-receipt">
+      <div style="font-size:36px; margin-bottom:12px;">🧾</div>
+      <div style="font-weight:700; font-size:15px; margin-bottom:6px;">Fee Receipt</div>
+      <div style="color:var(--text-secondary); font-size:13px; margin-bottom:16px;">Generate a printable fee payment receipt for a student.</div>
+      <button class="btn btn-primary" style="width:100%;" id="btn-gen-receipt">Generate</button>
+    </div>
+
+    <div class="card" style="padding:24px; text-align:center;" id="form-card-report">
+      <div style="font-size:36px; margin-bottom:12px;">📊</div>
+      <div style="font-weight:700; font-size:15px; margin-bottom:6px;">Student Report</div>
+      <div style="color:var(--text-secondary); font-size:13px; margin-bottom:16px;">Export the full student list as a CSV or printable HTML report.</div>
+      <button class="btn btn-ghost" style="width:100%;" id="btn-export-report">Export CSV</button>
+    </div>
+  </div>
+
+  <!-- Student picker (shown when a form is selected) -->
+  <div class="card" id="forms-student-picker" style="margin-top:20px; padding:20px; display:none;">
+    <div style="font-weight:600; margin-bottom:12px;" id="forms-picker-title">Select a student</div>
+    <div class="toolbar" style="margin-bottom:12px;">
+      <div class="search-wrapper">
+        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" class="search-input" id="forms-picker-search" placeholder="Search students…" />
+      </div>
+    </div>
+    <div class="table-wrapper" style="max-height:260px; overflow-y:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Student ID</th>
+            <th>Name</th>
+            <th>Class</th>
+            <th>Phone</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="forms-picker-tbody">
+          <tr><td colspan="5"><div class="empty-state" style="padding:20px 0"><div class="empty-state-icon">⏳</div><h3>Loading…</h3></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:12px; text-align:right;">
+      <button class="btn btn-ghost" id="forms-picker-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
