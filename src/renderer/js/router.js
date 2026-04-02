@@ -10,7 +10,7 @@ const ROUTES = {
   courses: { fragment: 'courses', init: 'initCourses', css: '../css/courses.css' },
   tests: { fragment: 'tests', init: 'initTests', css: '../css/tests.css' },
   forms: { fragment: 'forms', init: 'initForms', css: null },
-  fees: { fragment: 'fees', init: 'initFees', css: null },
+  fees: { fragment: 'fees', init: 'initFees', css: '../css/fees.css' },
 };
 
 let current = null;

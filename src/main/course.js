@@ -4,7 +4,7 @@
 
 const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron');
 const path = require('path');
-const fs   = require('fs');
+const fs = require('fs');
 
 // ─── Persistent storage path ───
 const COURSES_FILE = path.join(app.getPath('userData'), 'dataflow-courses.json');
@@ -27,9 +27,9 @@ let win;
 
 function createWindow() {
   win = new BrowserWindow({
-    width:  1300,
+    width: 1300,
     height: 860,
-    minWidth:  900,
+    minWidth: 900,
     minHeight: 600,
     titleBarStyle: 'hiddenInset',   // native inset on macOS; full frame on Win/Linux
     backgroundColor: '#f0f2f8',
@@ -48,7 +48,7 @@ function createWindow() {
     win.webContents.openDevTools({ mode: 'detach' });
 
   // ── IPC: data ──
-  ipcMain.handle('courses:load', ()      => loadCourses());
+  ipcMain.handle('courses:load', () => loadCourses());
   ipcMain.handle('courses:save', (_e, d) => saveCourses(d));
 
   // ── IPC: export ──
@@ -81,10 +81,10 @@ function createWindow() {
     {
       label: 'File',
       submenu: [
-        { label: 'Add New Course',   accelerator: 'CmdOrCtrl+N', click: () => win.webContents.send('menu:add') },
+        { label: 'Add New Course', accelerator: 'CmdOrCtrl+N', click: () => win.webContents.send('menu:add') },
         { type: 'separator' },
-        { label: 'Export JSON',      accelerator: 'CmdOrCtrl+E',       click: () => win.webContents.send('menu:exportJSON') },
-        { label: 'Export HTML',      accelerator: 'CmdOrCtrl+Shift+E', click: () => win.webContents.send('menu:exportHTML') },
+        { label: 'Export JSON', accelerator: 'CmdOrCtrl+E', click: () => win.webContents.send('menu:exportJSON') },
+        { label: 'Export HTML', accelerator: 'CmdOrCtrl+Shift+E', click: () => win.webContents.send('menu:exportHTML') },
         { type: 'separator' },
         { role: 'quit' },
       ],
@@ -99,10 +99,12 @@ function createWindow() {
         { role: 'togglefullscreen' },
       ],
     },
-    { label: 'Edit', submenu: [
-      { role: 'undo' }, { role: 'redo' }, { type: 'separator' },
-      { role: 'cut' }, { role: 'copy' }, { role: 'paste' }, { role: 'selectAll' },
-    ]},
+    {
+      label: 'Edit', submenu: [
+        { role: 'undo' }, { role: 'redo' }, { type: 'separator' },
+        { role: 'cut' }, { role: 'copy' }, { role: 'paste' }, { role: 'selectAll' },
+      ]
+    },
   ]));
 }
 

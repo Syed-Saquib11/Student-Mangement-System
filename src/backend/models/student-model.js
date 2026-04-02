@@ -16,6 +16,7 @@ function initStudentsTable() {
       courseId INTEGER,
       slotId INTEGER,
       feeStatus TEXT DEFAULT 'pending',
+      feeAmount INTEGER,
       phone TEXT,
       parentName TEXT,
       parentPhone TEXT,
@@ -33,6 +34,7 @@ function initStudentsTable() {
       db.run(`ALTER TABLE students ADD COLUMN parentPhone TEXT`, () => {});
       db.run(`ALTER TABLE students ADD COLUMN address TEXT`, () => {});
       db.run(`ALTER TABLE students ADD COLUMN status TEXT DEFAULT 'Active'`, () => {});
+      db.run(`ALTER TABLE students ADD COLUMN feeAmount INTEGER`, () => {});
     }
   });
 }
@@ -42,21 +44,21 @@ function addStudent(student, callback) {
   const {
     studentId, firstName, lastName,
     class: studentClass, rollNumber,
-    courseId, slotId, feeStatus, phone,
+    courseId, slotId, feeStatus, feeAmount, phone,
     parentName, parentPhone, address, status
   } = student;
 
   const sql = `
     INSERT INTO students
-      (studentId, firstName, lastName, class, rollNumber, courseId, slotId, feeStatus, phone, parentName, parentPhone, address, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (studentId, firstName, lastName, class, rollNumber, courseId, slotId, feeStatus, feeAmount, phone, parentName, parentPhone, address, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   db.run(sql, [
     studentId, firstName, lastName,
     studentClass, rollNumber,
     courseId || null, slotId || null,
-    feeStatus || 'pending', phone,
+    feeStatus || 'pending', feeAmount || 0, phone,
     parentName, parentPhone, address, status || 'Active'
   ], function (err) {
     if (err) return callback(err, null);
@@ -87,14 +89,14 @@ function updateStudent(id, student, callback) {
   const {
     firstName, lastName,
     class: studentClass, rollNumber,
-    courseId, slotId, feeStatus, phone,
+    courseId, slotId, feeStatus, feeAmount, phone,
     parentName, parentPhone, address, status
   } = student;
 
   const sql = `
     UPDATE students
     SET firstName = ?, lastName = ?, class = ?, rollNumber = ?,
-        courseId = ?, slotId = ?, feeStatus = ?, phone = ?,
+        courseId = ?, slotId = ?, feeStatus = ?, feeAmount = ?, phone = ?,
         parentName = ?, parentPhone = ?, address = ?, status = ?
     WHERE id = ?
   `;
@@ -103,7 +105,7 @@ function updateStudent(id, student, callback) {
     firstName, lastName,
     studentClass, rollNumber,
     courseId || null, slotId || null,
-    feeStatus, phone,
+    feeStatus, feeAmount || 0, phone,
     parentName, parentPhone, address, status,
     id
   ], function (err) {

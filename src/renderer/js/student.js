@@ -87,18 +87,15 @@ function renderTable(students) {
     const initials  = getInitials(s);
     const avatarBg  = avatarGradient(s.firstName, s.lastName, s.studentId);
     const course    = getCourseForStudent(s);
-    const slot      = getSlotForStudent(s);
-    const slotTxt   = getSlotDisplay(slot);
-    const courseTxt = course?.name || course?.code || (slot?.subject || '—');
+    const slots     = getSlotsForStudent(s);
+    const courseTxt = course?.name || course?.code || (slots[0]?.subject || '—');
 
     return `
       <tr data-id="${s.id}" style="opacity: 0; animation: sectionPopUp 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; animation-delay: ${0.28 + (idx * 0.06)}s">
         <td class="col-photo">
           <div class="student-avatar" style="background:${avatarBg};"><span class="avatar-initials">${esc(initials)}</span></div>
         </td>
-        <td class="col-id">
-          <span class="student-id-badge">${esc(s.studentId)}</span>
-        </td>
+
         <td class="col-name">
           <span class="student-name">${esc(fullName)}</span>
         </td>
@@ -109,8 +106,8 @@ function renderTable(students) {
           ${courseTxt && courseTxt !== '—' ? `<span class="course-pill">${esc(courseTxt)}</span>` : '—'}
         </td>
         <td class="col-slot">
-          ${slotTxt && slotTxt !== '—'
-            ? `<span class="slot-pill">${clockIcon()}${esc(slotTxt)}</span>`
+          ${slots.length > 0
+            ? slots.map(sl => `<span class="slot-pill" style="display:inline-flex;margin-bottom:4px;white-space:normal;text-align:left;">${clockIcon()}${esc(getSlotDisplay(sl))}</span>`).join('<br>')
             : '—'}
         </td>
         <td class="col-fee">${feeBadge(s.feeStatus)}</td>
@@ -164,7 +161,7 @@ function renderStats(students) {
       ${dateStr}
     </div>
     <div class="chip chip-pending">
-      ${pending} Dues Pending
+      ${pending} Dues Unpaid
     </div>
   `;
 }
@@ -272,17 +269,24 @@ function openStudentModal(student) {
     })
     .join('');
 
-  const slotOptions = Array.from(slotMap.values())
-    .sort((a, b) => String(a?.start || a?.startTime || '').localeCompare(String(b?.start || b?.startTime || '')))
-    .map(s => {
-      const selected = student?.slotId !== null && student?.slotId !== undefined
-        ? String(s.id) === String(student.slotId)
-        : false;
-      const daysStr = (s.days || []).map(d => d.slice(0, 3)).join(', ');
-      const labelObj = s.label ? `${s.label} (${daysStr})` : (formatTime12h(s.startTime) || s.startTime || s.subject || s.name || 'Slot');
-      return `<option value="${esc(String(s.id))}" ${selected ? 'selected' : ''}>${esc(labelObj)}</option>`;
-    })
-    .join('');
+  const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const TIMES = [
+    '7:00 AM - 8:00 AM',
+    '8:00 AM - 9:00 AM',
+    '9:00 AM - 10:00 AM',
+    '10:00 AM - 11:00 AM',
+    '11:00 AM - 12:00 PM',
+    '3:00 PM - 4:00 PM',
+    '4:00 PM - 5:00 PM',
+    '5:00 PM - 6:00 PM',
+    '6:00 PM - 7:00 PM',
+    '7:00 PM - 8:00 PM'
+  ];
+
+  const rawSlots = (student?.slotId ? String(student.slotId).split(',') : []).filter(s => s.includes('|'));
+  let d1 = '', t1 = '', d2 = '', t2 = '';
+  if (rawSlots[0]) { [d1, t1] = rawSlots[0].split('|'); }
+  if (rawSlots[1]) { [d2, t2] = rawSlots[1].split('|'); }
 
   const currentClass = student?.class || '';
   const commonClasses = [
@@ -321,10 +325,7 @@ function openStudentModal(student) {
               <input class="form-input edit-form-input" id="inp-fullName" type="text" placeholder="Amit Kumar" value="${esc(fullNameValue)}" />
             </div>
 
-            <div class="form-group">
-              <label class="form-label edit-form-label">STUDENT ID</label>
-              <input class="form-input edit-form-input" id="inp-studentId" type="text" placeholder="STU-2401" disabled value="${esc(student?.studentId || '')}" />
-            </div>
+
             <div class="form-group">
               <label class="form-label edit-form-label">ROLL NUMBER</label>
               <input class="form-input edit-form-input" id="inp-roll" type="text" placeholder="01" value="${esc(rollValue)}" />
@@ -344,12 +345,32 @@ function openStudentModal(student) {
               </select>
             </div>
 
-            <div class="form-group">
-              <label class="form-label edit-form-label">SLOT TIMING</label>
-              <select class="form-select edit-form-select" id="inp-slot">
-                <option value="" ${(!student || student.slotId === null || student.slotId === undefined) ? 'selected' : ''}>—</option>
-                ${slotOptions}
-              </select>
+            <div class="form-group form-full">
+              <label class="form-label edit-form-label">SLOT 1</label>
+              <div style="display:flex; gap:10px;">
+                <select class="form-select edit-form-select" id="inp-day1" style="flex:1">
+                  <option value="">Select Day</option>
+                  ${ DAYS.map(d => `<option value="${esc(d)}" ${d===d1?'selected':''}>${esc(d)}</option>`).join('') }
+                </select>
+                <select class="form-select edit-form-select" id="inp-time1" style="flex:1">
+                  <option value="">Select Time</option>
+                  ${ TIMES.map(t => `<option value="${esc(t)}" ${t===t1?'selected':''}>${esc(t)}</option>`).join('') }
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group form-full">
+              <label class="form-label edit-form-label">SLOT 2</label>
+              <div style="display:flex; gap:10px;">
+                <select class="form-select edit-form-select" id="inp-day2" style="flex:1">
+                  <option value="">Select Day</option>
+                  ${ DAYS.map(d => `<option value="${esc(d)}" ${d===d2?'selected':''}>${esc(d)}</option>`).join('') }
+                </select>
+                <select class="form-select edit-form-select" id="inp-time2" style="flex:1">
+                  <option value="">Select Time</option>
+                  ${ TIMES.map(t => `<option value="${esc(t)}" ${t===t2?'selected':''}>${esc(t)}</option>`).join('') }
+                </select>
+              </div>
             </div>
             <div class="form-group">
               <label class="form-label edit-form-label">MOBILE</label>
@@ -357,10 +378,14 @@ function openStudentModal(student) {
             </div>
 
             <div class="form-group">
+              <label class="form-label edit-form-label">FEE AMOUNT (₹)</label>
+              <input class="form-input edit-form-input" id="inp-feeAmount" type="number" placeholder="15000" value="${esc(student?.feeAmount || '')}" />
+            </div>
+            <div class="form-group">
               <label class="form-label edit-form-label">FEE STATUS</label>
               <select class="form-select edit-form-select" id="inp-fee">
                 <option value="paid" ${(!student || student.feeStatus === 'paid') ? 'selected' : ''}>Paid</option>
-                <option value="pending" ${student?.feeStatus === 'pending' ? 'selected' : ''}>Pending</option>
+                <option value="pending" ${student?.feeStatus === 'pending' ? 'selected' : ''}>Unpaid</option>
               </select>
             </div>
             <div class="form-group">
@@ -411,6 +436,19 @@ function openStudentModal(student) {
   // Save handler
   document.getElementById('modal-save-btn').addEventListener('click', handleSaveStudent);
 
+  // Multi-select toggle behavior for slot timing native dropdown
+  const slotSelect = document.getElementById('inp-slot');
+  if (slotSelect) {
+    slotSelect.addEventListener('mousedown', function(e) {
+      if (e.target.tagName === 'OPTION') {
+        e.preventDefault();
+        e.target.selected = !e.target.selected;
+        // optionally focus the select so scrolling works
+        this.focus();
+      }
+    });
+  }
+
   // Focus first input
   setTimeout(() => document.getElementById('inp-fullName')?.focus(), 50);
 }
@@ -438,10 +476,17 @@ async function handleSaveStudent() {
       return Number.isFinite(n) ? n : v;
     })(),
     slotId: (() => {
-      const v = document.getElementById('inp-slot')?.value;
-      return v || null;
+      const day1 = document.getElementById('inp-day1')?.value;
+      const time1 = document.getElementById('inp-time1')?.value;
+      const day2 = document.getElementById('inp-day2')?.value;
+      const time2 = document.getElementById('inp-time2')?.value;
+      const arr = [];
+      if (day1 && time1) arr.push(`${day1}|${time1}`);
+      if (day2 && time2) arr.push(`${day2}|${time2}`);
+      return arr.join(',');
     })(),
     phone:       document.getElementById('inp-phone')?.value.trim(),
+    feeAmount:   Number(document.getElementById('inp-feeAmount')?.value) || 0,
     feeStatus:   document.getElementById('inp-fee')?.value,
     status:      document.getElementById('inp-status')?.value,
     parentName:  document.getElementById('inp-parentName')?.value.trim(),
@@ -489,7 +534,6 @@ function openStudentViewModal(student) {
             <div>
               <h2 style="margin: 0 0 6px 0; font-family: var(--font-display); font-size: 24px; font-weight: 800; color: #0f172a;">${esc(fullName || '—')}</h2>
               <div style="display: flex; gap: 10px; align-items: center;">
-                <span class="student-id-badge" style="background: #ffffff; border: 1px solid #cbd5e1; font-size: 12px; padding: 2px 10px;">${esc(student.studentId || '—')}</span>
                 <span style="font-size: 13px; font-weight: 700; color: ${student.status === 'Inactive' ? '#94a3b8' : '#10b981'};">${esc(student.status || 'Active')}</span>
               </div>
             </div>
@@ -507,11 +551,13 @@ function openStudentViewModal(student) {
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #f1f5f9;">
               <div>
                 <div style="font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase;">Course</div>
-                <div style="font-size: 14px; color: #1e293b; font-weight: 600;">${esc(getCourseDisplay(course, slot))}</div>
+                <div style="font-size: 14px; color: #1e293b; font-weight: 600;">${esc(getCourseDisplay(course, getSlotsForStudent(student)[0]))}</div>
               </div>
               <div>
                 <div style="font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase;">Slot Timing</div>
-                <div style="font-size: 14px; color: #1e293b; font-weight: 600; display: flex; align-items: center; gap: 6px;">${clockIcon()} ${esc(getSlotDisplay(slot))}</div>
+                <div style="font-size: 14px; color: #1e293b; font-weight: 600; display: flex; flex-direction: column; gap: 6px;">
+                  ${getSlotsForStudent(student).map(sl => `<div style="display:flex;align-items:center;gap:6px;">${clockIcon()} ${esc(getSlotDisplay(sl))}</div>`).join('') || '—'}
+                </div>
               </div>
               <div>
                 <div style="font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase;">Class / Grade</div>
@@ -678,7 +724,7 @@ function feeBadge(status) {
     return '<span class="badge badge-success student-fee-badge"><span class="fee-icon" aria-hidden="true">✓</span> Paid</span>';
   }
   if (status === 'pending') {
-    return '<span class="badge badge-warning student-fee-badge"><span class="fee-icon" aria-hidden="true">✗</span> Partial</span>';
+    return '<span class="badge badge-warning student-fee-badge"><span class="fee-icon" aria-hidden="true">✗</span> Unpaid</span>';
   }
   return `<span class="badge">${esc(status)}</span>`;
 }
@@ -757,27 +803,32 @@ function getCourseForStudent(student) {
   return key ? (courseMap.get(key) || null) : null;
 }
 
-function getSlotForStudent(student) {
-  let key = student?.slotId !== null && student?.slotId !== undefined && student?.slotId !== ''
-    ? String(student.slotId)
-    : '';
+function getSlotsForStudent(student) {
+  let ids = [];
+  if (student?.slotId) {
+    ids = String(student.slotId).split(',').map(s => s.trim()).filter(Boolean);
+  }
 
   // If not explicitly saved via dropdown, actively scan the rich Slots module data 
   // to see if they were enrolled via the 'Add Students' button in the Slot UI!
-  if ((!key || !slotMap.has(key)) && globalSlotData) {
+  if (globalSlotData) {
     for (const day of Object.keys(globalSlotData)) {
       const dayStudents = globalSlotData[day].students || {};
       for (const [sId, enrolledArr] of Object.entries(dayStudents)) {
         if (Array.isArray(enrolledArr) && enrolledArr.includes(String(student.id))) {
-          key = sId;
-          break;
+          if (!ids.includes(sId)) ids.push(sId);
         }
       }
-      if (key) break;
     }
   }
 
-  return key ? (slotMap.get(key) || null) : null;
+  return ids.map(id => {
+    if (id.includes('|')) {
+      const [d, t] = id.split('|');
+      return { raw: true, label: `${t} (${d})` };
+    }
+    return slotMap.get(id);
+  }).filter(Boolean);
 }
 
 function getCourseDisplay(course, slot) {

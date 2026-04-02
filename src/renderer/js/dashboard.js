@@ -36,7 +36,7 @@ function renderDashStats(students) {
       <div class="stat-value success">${paid}</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Fee Pending</div>
+      <div class="stat-label">Fee Unpaid</div>
       <div class="stat-value warning">${pending}</div>
     </div>
     <div class="stat-card">
@@ -71,7 +71,7 @@ function renderFeeChart(students) {
 
   el.innerHTML = `
     ${bar('Paid', paid, 'var(--success)')}
-    ${bar('Pending', pending, 'var(--warning)')}
+    ${bar('Unpaid', pending, 'var(--warning)')}
   `;
 }
 
@@ -124,7 +124,7 @@ function bindDashQuickActions() {
 // ── Helpers (duplicated here so dashboard works standalone) ──
 function feeBadge(status) {
   if (status === 'paid')    return '<span class="badge badge-success">Paid</span>';
-  if (status === 'pending') return '<span class="badge badge-warning">Pending</span>';
+  if (status === 'pending') return '<span class="badge badge-warning">Unpaid</span>';
   return `<span class="badge">${esc(status)}</span>`;
 }
 

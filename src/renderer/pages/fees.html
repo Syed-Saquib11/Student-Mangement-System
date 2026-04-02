@@ -1,54 +1,160 @@
-<div class="page-header">
-  <div>
-    <h2 class="page-title">Fees</h2>
-    <p class="page-subtitle" id="fees-subtitle">Loading fee records…</p>
-  </div>
-</div>
-
-<div class="page-body">
-  <div class="stats-row" id="fees-stats"></div>
-
-  <div class="toolbar" style="margin-top:16px;">
-    <div class="search-wrapper">
-      <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
-      <input type="text" class="search-input" id="fees-search" placeholder="Search student name or ID…" />
-    </div>
-    <div class="ml-auto flex gap-2">
-      <select class="form-select" id="fees-filter" style="width:160px">
-        <option value="">All Status</option>
-        <option value="paid">Paid</option>
-        <option value="pending">Pending</option>
-      </select>
-    </div>
+<div class="page">
+  <div class="phdr">
+    <div><h1>Fees Management</h1><p>Track and manage student fee payments</p></div>
   </div>
 
-  <div class="table-card" style="margin-top:12px;">
-    <div class="table-wrapper">
-      <table id="fees-table">
-        <thead>
-          <tr>
-            <th>Student ID</th>
-            <th>Name</th>
-            <th>Class</th>
-            <th>Phone</th>
-            <th>Fee Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="fees-tbody">
-          <tr><td colspan="6">
-            <div class="empty-state">
-              <div class="empty-state-icon">⏳</div>
-              <h3>Loading…</h3>
-            </div>
-          </td></tr>
-        </tbody>
+  <div class="stats-grid" id="sg"></div>
+
+  <div class="cbc">
+    <div class="cbc-t"><div><div class="cbc-ti">Overall Collection Progress</div><div class="cbc-su">Total fees collected across all students and courses</div></div><div class="cbc-pct" id="cp">0%</div></div>
+    <div class="cbc-tr"><div class="cbc-fi" id="cf" style="width:0%"></div></div>
+    <div class="cbc-mk"><span class="cbc-m">₹0</span><span class="cbc-m">25%</span><span class="cbc-m">50%</span><span class="cbc-m">75%</span><span class="cbc-m" id="cm">₹0</span></div>
+  </div>
+
+  <div class="fr">
+    <div class="sb-wrap">
+      <svg class="si-srch" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="qi" placeholder="Search by student, ID or course…" oninput="window.feesObj.onSrch(this)"/>
+      <button class="si-clr" id="qclr" onclick="window.feesObj.clrSrch()">✕</button>
+    </div>
+    
+    <div class="month-dropdown" id="month-dropdown">
+        <button class="month-dropdown-btn" id="month-btn" onclick="window.feesObj.toggleMonthDropdown()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span id="month-btn-label">All Months</span>
+          <svg class="month-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="month-dropdown-panel" id="month-panel">
+          <div class="month-dropdown-item active" data-month="" onclick="window.feesObj.selectMonth(this)">All Months</div>
+          <div class="month-dropdown-item" data-month="01" onclick="window.feesObj.selectMonth(this)">January</div>
+          <div class="month-dropdown-item" data-month="02" onclick="window.feesObj.selectMonth(this)">February</div>
+          <div class="month-dropdown-item" data-month="03" onclick="window.feesObj.selectMonth(this)">March</div>
+          <div class="month-dropdown-item" data-month="04" onclick="window.feesObj.selectMonth(this)">April</div>
+          <div class="month-dropdown-item" data-month="05" onclick="window.feesObj.selectMonth(this)">May</div>
+          <div class="month-dropdown-item" data-month="06" onclick="window.feesObj.selectMonth(this)">June</div>
+          <div class="month-dropdown-item" data-month="07" onclick="window.feesObj.selectMonth(this)">July</div>
+          <div class="month-dropdown-item" data-month="08" onclick="window.feesObj.selectMonth(this)">August</div>
+          <div class="month-dropdown-item" data-month="09" onclick="window.feesObj.selectMonth(this)">September</div>
+          <div class="month-dropdown-item" data-month="10" onclick="window.feesObj.selectMonth(this)">October</div>
+          <div class="month-dropdown-item" data-month="11" onclick="window.feesObj.selectMonth(this)">November</div>
+          <div class="month-dropdown-item" data-month="12" onclick="window.feesObj.selectMonth(this)">December</div>
+        </div>
+    </div>
+
+    <select class="fsel" id="cf2" onchange="window.feesObj.rt()"><option value="">All Courses</option></select>
+    <div class="ftabs">
+      <button class="ftab on" data-f="all"     onclick="window.feesObj.sf(this)">All <span class="tc" id="ca">0</span></button>
+      <button class="ftab"    data-f="paid"    onclick="window.feesObj.sf(this)">Paid <span class="tc" id="cp2">0</span></button>
+      <button class="ftab"    data-f="unpaid"  onclick="window.feesObj.sf(this)">Unpaid <span class="tc" id="cu">0</span></button>
+    </div>
+  </div>
+
+  <div class="tcard">
+    <div class="tcard-h">
+      <div><div class="tcard-t" id="tt">Fee Records</div><div class="tcard-s" id="ts"></div></div>
+    </div>
+    <div class="tbl-sc">
+      <table>
+        <thead><tr>
+          <th class="sortable" onclick="window.feesObj.srt('name')">Student <span class="sa" id="an">↑</span></th>
+          <th class="sortable" onclick="window.feesObj.srt('course')">Course <span class="sa" id="ac"></span></th>
+          <th class="sortable" onclick="window.feesObj.srt('total')">Total Fees <span class="sa" id="at"></span></th>
+          <th class="sortable" onclick="window.feesObj.srt('paid')">Paid <span class="sa" id="ap"></span></th>
+          <th class="sortable" onclick="window.feesObj.srt('balance')">Balance <span class="sa" id="ab"></span></th>
+          <th class="sortable" onclick="window.feesObj.srt('due')">Due Date <span class="sa" id="ad"></span></th>
+          <th class="sortable" onclick="window.feesObj.srt('status')">Status <span class="sa" id="ast"></span></th>
+          <th>Actions</th>
+        </tr></thead>
+        <tbody id="tb"></tbody>
       </table>
     </div>
-    <div class="table-footer">
-      <span class="table-count" id="fees-count">—</span>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="ov" id="addMd">
+  <div class="md">
+    <div class="mh"><div><h2 id="amt">Edit Fee Record</h2><p class="msub" id="ams">Update student fee details</p></div><button class="mc" onclick="window.feesObj.closeAdd()">✕</button></div>
+    <div class="mb">
+      <div class="frow">
+        <div class="fi" id="fn-fi" style="grid-column: 1 / -1;"><label>Student Name *</label><input type="text" id="fn" placeholder="e.g. Priya Patel" oninput="window.feesObj.cfe('fn-fi')"/><div class="ferr">Name is required</div></div>
+      </div>
+      <div class="frow">
+        <div class="fi" id="fc-fi"><label>Course *</label><input type="text" id="fc" placeholder="e.g. Advanced Mathematics" list="clist" oninput="window.feesObj.cfe('fc-fi')"/><datalist id="clist"></datalist><div class="ferr">Course is required</div></div>
+        <div class="fi"><label>Grade / Class</label><input type="text" id="fg" placeholder="e.g. Grade 10-A"/></div>
+      </div>
+      <div class="frow">
+        <div class="fi" id="ft-fi"><label>Total Fees (₹) *</label><input type="number" id="ftot" placeholder="e.g. 15000" min="1" oninput="window.feesObj.cfe('ft-fi')"/><div class="ferr">Valid amount required</div></div>
+        <div class="fi" id="fd-fi"><label>Due Date *</label><input type="date" id="fdu" oninput="window.feesObj.cfe('fd-fi')"/><div class="ferr">Due date is required</div></div>
+      </div>
+      <div class="fi"><label>Phone / Contact</label><input type="text" id="fph" placeholder="e.g. 9876543210"/></div>
+      <div class="fi"><label>Notes</label><textarea id="fno" rows="2" placeholder="Any additional notes…" style="resize:none;"></textarea></div>
+    </div>
+    <div class="mf"><button class="btn-cc" onclick="window.feesObj.closeAdd()">Cancel</button><button class="btn btn-pp" onclick="window.feesObj.saveRec()">Save Changes</button></div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="ov" id="detMd">
+  <div class="md md-xl">
+    <div class="mh"><div><h2 id="dmt">Detail</h2><p class="msub" id="dms"></p></div><button class="mc" onclick="window.feesObj.closeDet()">✕</button></div>
+    <div class="mb">
+      <div style="margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+          <span style="font-size:12px;color:var(--t2);font-weight:600;" id="dplbl">Progress</span>
+          <span style="font-size:12px;font-weight:700;color:var(--purple);" id="dppct">0%</span>
+        </div>
+        <div style="height:8px;background:#f0f2f5;border-radius:99px;overflow:hidden;"><div id="dpbar" style="height:100%;border-radius:99px;background:linear-gradient(90deg,#4f46e5,#7c3aed);transition:width .5s;width:0%"></div></div>
+      </div>
+      <div class="dg" id="dgrid"></div>
+      <div class="dv"></div>
+      <div class="slbl">Payment History</div>
+      <div id="dpl"></div>
+      <div class="apa">
+        <div class="apt">Record New Payment</div>
+        <div class="frow3">
+          <div class="fi" style="margin:0"><label>Amount (₹) *</label><input type="number" id="na" placeholder="0" min="1"/></div>
+          <div class="fi" style="margin:0"><label>Date *</label><input type="date" id="nd"/></div>
+          <div class="fi" style="margin:0"><label>Method</label><select id="nm"><option>Cash</option><option>UPI</option><option>Bank Transfer</option><option>Cheque</option><option>Card</option></select></div>
+        </div>
+        <div class="fi" style="margin-top:10px;margin-bottom:0;"><label>Reference / Note</label><input type="text" id="nn" placeholder="Transaction ID or note…"/></div>
+        <div style="display:flex;justify-content:flex-end;margin-top:12px;"><button class="btn btn-gg" onclick="window.feesObj.addPay()" style="padding:8px 18px;font-size:12px;">+ Add Payment</button></div>
+      </div>
+      <div class="dv"></div>
+      <div id="dsum"></div>
+    </div>
+    <div class="mf sp">
+      <button class="btn btn-rr" style="font-size:12px;padding:8px 14px;" onclick="window.feesObj.delFromDet()">🗑 Delete Record</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-cc" onclick="window.feesObj.closeDet()">Close</button>
+        <button class="btn btn-pp" onclick="window.feesObj.closeDet()">💾 Save Changes</button>
+      </div>
     </div>
   </div>
 </div>
+
+<!-- REMINDER MODAL -->
+<div class="ov" id="remMd">
+  <div class="md">
+    <div class="mh"><div><h2>Send Payment Reminder</h2><p class="msub" id="rsub2"></p></div><button class="mc" onclick="window.feesObj.closeRem()">✕</button></div>
+    <div class="mb">
+      <div class="frow">
+        <div class="fi"><label>Send Via</label><select id="rv"><option>SMS</option><option>WhatsApp</option><option>Email</option><option>App Notification</option></select></div>
+        <div class="fi"><label>Urgency</label><select id="rug" onchange="window.feesObj.updRem()"><option value="friendly">Friendly Reminder</option><option value="firm">Firm Notice</option><option value="final">Final Warning</option></select></div>
+      </div>
+      <div class="fi"><label>Message Preview</label><div class="rprev" id="rprev"></div></div>
+      <div class="fi"><label>Custom Note</label><textarea id="rex" rows="2" placeholder="Add a custom note…" style="resize:none;" oninput="window.feesObj.updRem()"></textarea></div>
+    </div>
+    <div class="mf"><button class="btn-cc" onclick="window.feesObj.closeRem()">Cancel</button><button class="btn btn-pp" onclick="window.feesObj.sendRem()">📤 Send Now</button></div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="ov" id="cfMd">
+  <div class="md" style="max-width:360px;">
+    <div class="mh"><div><h2 id="cft">Confirm</h2><p id="cfm" style="font-size:13px;color:var(--t2);margin-top:6px;line-height:1.5;"></p></div></div>
+    <div class="mf" style="padding-top:16px;"><button class="btn-cc" onclick="window.feesObj.closeCf()">Cancel</button><button class="btn btn-rr" id="cfok">Confirm</button></div>
+  </div>
+</div>
+
+<div class="tw" id="tw"></div>

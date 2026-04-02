@@ -65,7 +65,7 @@ function loadStudentsPage() {
           <select class="form-select" id="filter-fee" style="width:160px">
             <option value="">All Fee Status</option>
             <option value="paid">Paid</option>
-            <option value="pending">Pending</option>
+            <option value="pending">Unpaid</option>
           </select>
         </div>
       </div>

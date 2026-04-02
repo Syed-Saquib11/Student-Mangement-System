@@ -1,0 +1,198 @@
+/* src/renderer/css/fees.css */
+#main-content[data-page="fees"] {
+  --bg:#f0f2f5; --white:#fff; --sb:#1e2235; --sb-act:#2d3250;
+  --border:#e4e8f0; --text:#1a1d2e; --t2:#6b7280; --t3:#9ca3af;
+  --blue:#4f46e5; --blue-l:#eef2ff; --blue-d:#4338ca;
+  --green:#22c55e; --green-l:#f0fdf4; --green-d:#16a34a;
+  --orange:#f97316; --orange-l:#fff7ed;
+  --purple:#7c3aed; --purple-l:#f5f3ff; --purple-d:#6d28d9;
+  --red:#ef4444; --red-l:#fef2f2;
+  --sh:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+  --sh-md:0 4px 16px rgba(0,0,0,.09);
+  --sh-lg:0 10px 40px rgba(0,0,0,.14);
+  --r:14px; --rs:10px; --tb:40px; --sb-w:240px;
+
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow-y: auto;
+  height: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  scroll-behavior: smooth;
+}
+
+#main-content[data-page="fees"]::-webkit-scrollbar { width: 6px; }
+#main-content[data-page="fees"]::-webkit-scrollbar-track { background: transparent; }
+#main-content[data-page="fees"]::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+#main-content[data-page="fees"] .page { max-width:1300px; margin:0 auto; padding:28px 32px 80px; }
+
+#main-content[data-page="fees"] .phdr { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:14px; }
+#main-content[data-page="fees"] .phdr h1 { font-size:30px; font-weight:800; color:var(--text); letter-spacing:-.5px; }
+#main-content[data-page="fees"] .phdr p { font-size:13px; color:var(--t2); margin-top:3px; }
+
+#main-content[data-page="fees"] .btn { display:inline-flex; align-items:center; gap:7px; padding:10px 18px; border-radius:var(--rs); font-family:'Plus Jakarta Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; border:none; }
+#main-content[data-page="fees"] .btn-ol { background:var(--white); color:var(--t2); border:1.5px solid var(--border); }
+#main-content[data-page="fees"] .btn-ol:hover { border-color:var(--blue); color:var(--blue); background:var(--blue-l); }
+#main-content[data-page="fees"] .btn-pp { background:var(--purple); color:#fff; font-weight:700; box-shadow:0 4px 14px rgba(124,58,237,.35); }
+#main-content[data-page="fees"] .btn-pp:hover { background:var(--purple-d); transform:translateY(-1px); }
+#main-content[data-page="fees"] .btn-gg { background:var(--green); color:#fff; font-weight:700; box-shadow:0 4px 12px rgba(34,197,94,.3); }
+#main-content[data-page="fees"] .btn-gg:hover { background:var(--green-d); }
+#main-content[data-page="fees"] .btn-rr { background:var(--red); color:#fff; font-weight:700; }
+#main-content[data-page="fees"] .btn-rr:hover { background:#dc2626; }
+#main-content[data-page="fees"] .btn-cc { background:var(--bg); border:1.5px solid var(--border); border-radius:var(--rs); padding:10px 20px; font-weight:600; font-size:13px; cursor:pointer; color:var(--t2); transition:all .15s; }
+#main-content[data-page="fees"] .btn-cc:hover { background:var(--border); color:var(--text); }
+
+#main-content[data-page="fees"] .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:20px; }
+#main-content[data-page="fees"] .sc { background:var(--white); border-radius:var(--r); padding:20px 22px; box-shadow:var(--sh); display:flex; align-items:center; justify-content:space-between; border-left:4px solid transparent; cursor:pointer; transition:box-shadow .15s,transform .15s; }
+#main-content[data-page="fees"] .sc:hover { box-shadow:var(--sh-md); transform:translateY(-1px); }
+#main-content[data-page="fees"] .sc.cb { border-left-color:#4f46e5; }
+#main-content[data-page="fees"] .sc.cg { border-left-color:#22c55e; }
+#main-content[data-page="fees"] .sc.cp { border-left-color:#7c3aed; }
+#main-content[data-page="fees"] .sc.co { border-left-color:#f97316; }
+#main-content[data-page="fees"] .sl { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; color:var(--t2); margin-bottom:6px; }
+#main-content[data-page="fees"] .sv { font-size:26px; font-weight:800; color:var(--text); line-height:1; letter-spacing:-.3px; }
+#main-content[data-page="fees"] .ss { font-size:11px; color:var(--t3); margin-top:4px; }
+#main-content[data-page="fees"] .si { width:42px; height:42px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+#main-content[data-page="fees"] .sib { background:var(--blue-l); color:#4f46e5; }
+#main-content[data-page="fees"] .sig { background:var(--green-l); color:var(--green); }
+#main-content[data-page="fees"] .sip { background:var(--purple-l); color:var(--purple); }
+#main-content[data-page="fees"] .sio { background:var(--orange-l); color:var(--orange); }
+
+#main-content[data-page="fees"] .cbc { background:var(--white); border-radius:var(--r); padding:18px 22px; box-shadow:var(--sh); margin-bottom:20px; }
+#main-content[data-page="fees"] .cbc-t { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
+#main-content[data-page="fees"] .cbc-ti { font-size:14px; font-weight:700; color:var(--text); }
+#main-content[data-page="fees"] .cbc-su { font-size:11px; color:var(--t3); margin-top:2px; }
+#main-content[data-page="fees"] .cbc-pct { font-size:22px; font-weight:800; color:var(--purple); }
+#main-content[data-page="fees"] .cbc-tr { height:8px; background:#f0f2f5; border-radius:99px; overflow:hidden; }
+#main-content[data-page="fees"] .cbc-fi { height:100%; background:linear-gradient(90deg,#4f46e5,#7c3aed); border-radius:99px; transition:width .8s cubic-bezier(.4,0,.2,1); }
+#main-content[data-page="fees"] .cbc-mk { display:flex; justify-content:space-between; margin-top:6px; }
+#main-content[data-page="fees"] .cbc-m { font-size:10px; color:var(--t3); font-weight:600; }
+
+#main-content[data-page="fees"] .fr { display:flex; align-items:center; gap:12px; margin-bottom:18px; flex-wrap:wrap; }
+#main-content[data-page="fees"] .sb-wrap { position:relative; flex:1; min-width:220px; }
+#main-content[data-page="fees"] .sb-wrap input { width:100%; background:var(--white); border:1.5px solid var(--border); border-radius:var(--rs); padding:10px 36px; font-family:'Plus Jakarta Sans',sans-serif; font-size:13px; color:var(--text); outline:none; transition:all .15s; }
+#main-content[data-page="fees"] .sb-wrap input::placeholder { color:var(--t3); }
+#main-content[data-page="fees"] .sb-wrap input:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(79,70,229,.08); }
+#main-content[data-page="fees"] .si-srch { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--t3); pointer-events:none; }
+#main-content[data-page="fees"] .si-clr { position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--t3); cursor:pointer; font-size:15px; border-radius:4px; padding:1px 5px; display:none; }
+#main-content[data-page="fees"] .si-clr:hover { color:var(--text); }
+#main-content[data-page="fees"] .fsel { background:var(--white); border:1.5px solid var(--border); border-radius:var(--rs); padding:10px 14px; font-family:'Plus Jakarta Sans',sans-serif; font-size:13px; color:var(--t2); outline:none; cursor:pointer; }
+#main-content[data-page="fees"] .fsel:focus { border-color:var(--blue); }
+#main-content[data-page="fees"] .ftabs { display:flex; background:var(--white); border:1.5px solid var(--border); border-radius:var(--rs); padding:3px; gap:2px; }
+#main-content[data-page="fees"] .ftab { border:none; background:transparent; padding:7px 12px; border-radius:7px; font-family:'Plus Jakarta Sans',sans-serif; font-size:12px; font-weight:600; color:var(--t3); cursor:pointer; transition:all .15s; white-space:nowrap; }
+#main-content[data-page="fees"] .ftab:hover { color:var(--text); }
+#main-content[data-page="fees"] .ftab.on { background:var(--blue); color:#fff; }
+#main-content[data-page="fees"] .ftab .tc { font-size:10px; background:rgba(255,255,255,.3); border-radius:99px; padding:1px 6px; margin-left:3px; }
+#main-content[data-page="fees"] .ftab:not(.on) .tc { background:var(--border); color:var(--t3); }
+
+#main-content[data-page="fees"] .tcard { background:var(--white); border-radius:var(--r); box-shadow:var(--sh); overflow:hidden; }
+#main-content[data-page="fees"] .tcard-h { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid var(--border); gap:10px; }
+#main-content[data-page="fees"] .tcard-t { font-size:14px; font-weight:700; color:var(--text); }
+#main-content[data-page="fees"] .tcard-s { font-size:12px; color:var(--t3); margin-top:1px; }
+#main-content[data-page="fees"] .tbl-sc { overflow-x:auto; }
+#main-content[data-page="fees"] table { width:100%; border-collapse:collapse; }
+#main-content[data-page="fees"] thead tr { background:#f9fafb; margin: 0; padding: 0; }
+#main-content[data-page="fees"] thead th { padding:11px 14px; text-align:left; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; color:var(--t2); white-space:nowrap; border-bottom:1px solid var(--border); cursor:pointer; user-select:none; transition:color .12s; background: unset; }
+#main-content[data-page="fees"] thead th:hover { color:var(--text); }
+#main-content[data-page="fees"] thead th.sorted { color:var(--blue); }
+#main-content[data-page="fees"] .sa { font-size:9px; margin-left:3px; opacity:.6; }
+#main-content[data-page="fees"] tbody tr { border-top:1px solid var(--border); transition:background .1s; }
+#main-content[data-page="fees"] tbody tr:hover { background:#fafbff; }
+#main-content[data-page="fees"] tbody tr.rov { background:#fff5f5; }
+#main-content[data-page="fees"] tbody tr.rov:hover { background:#fee2e2; }
+#main-content[data-page="fees"] tbody td { padding:13px 14px; font-size:13px; vertical-align:middle; background: unset; border: unset; }
+
+#main-content[data-page="fees"] .stc { display:flex; align-items:center; gap:10px; }
+#main-content[data-page="fees"] .av { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff; flex-shrink:0; }
+#main-content[data-page="fees"] .stn { font-weight:700; font-size:13px; color:var(--text); }
+#main-content[data-page="fees"] .sti { font-size:10px; color:var(--t3); }
+#main-content[data-page="fees"] .stg { font-size:10px; color:var(--blue); font-weight:600; background:var(--blue-l); border-radius:4px; padding:1px 5px; display:inline-block; margin-top:2px; }
+#main-content[data-page="fees"] .famt { font-size:13px; font-weight:600; color:var(--text); }
+#main-content[data-page="fees"] .pc { display:flex; flex-direction:column; gap:4px; min-width:125px; }
+#main-content[data-page="fees"] .pt { display:flex; align-items:center; justify-content:space-between; gap:6px; }
+#main-content[data-page="fees"] .pv { font-size:13px; font-weight:700; color:var(--text); }
+#main-content[data-page="fees"] .pp { font-size:11px; color:var(--t3); }
+#main-content[data-page="fees"] .pb { height:4px; background:#e9ecf1; border-radius:99px; }
+#main-content[data-page="fees"] .pf { height:100%; background:#4f46e5; border-radius:99px; transition:width .4s; }
+#main-content[data-page="fees"] .pf.full { background:var(--green); }
+#main-content[data-page="fees"] .pf.low { background:var(--orange); }
+#main-content[data-page="fees"] .pf.zero { background:var(--border); }
+#main-content[data-page="fees"] .ba { font-size:13px; font-weight:600; }
+#main-content[data-page="fees"] .b-cl { color:var(--green); }
+#main-content[data-page="fees"] .b-du { color:var(--orange); }
+#main-content[data-page="fees"] .b-ov { color:var(--red); font-weight:700; }
+#main-content[data-page="fees"] .dd { font-size:12px; }
+#main-content[data-page="fees"] .d-ok { color:var(--t2); }
+#main-content[data-page="fees"] .d-so { color:var(--orange); font-weight:600; }
+#main-content[data-page="fees"] .d-ov { color:var(--red); font-weight:700; }
+#main-content[data-page="fees"] .bdg { display:inline-flex; align-items:center; border-radius:20px; padding:4px 12px; font-size:11px; font-weight:700; border:1.5px solid transparent; white-space:nowrap; }
+#main-content[data-page="fees"] .b-paid { background:var(--green-l); color:#16a34a; border-color:#bbf7d0; }
+#main-content[data-page="fees"] .b-partial { background:var(--orange-l); color:#c2410c; border-color:#fed7aa; }
+#main-content[data-page="fees"] .b-unpaid { background:var(--blue-l); color:#4338ca; border-color:#c7d2fe; }
+#main-content[data-page="fees"] .b-overdue { background:var(--red-l); color:var(--red); border-color:#fecaca; }
+#main-content[data-page="fees"] .ac { display:flex; gap:5px; align-items:center; flex-wrap:wrap; }
+#main-content[data-page="fees"] .ab { display:inline-flex; align-items:center; gap:4px; padding:5px 10px; border-radius:7px; font-family:'Plus Jakarta Sans',sans-serif; font-size:11px; font-weight:600; cursor:pointer; border:1.5px solid var(--border); background:transparent; color:var(--t3); transition:all .15s; white-space:nowrap; }
+#main-content[data-page="fees"] .ab:hover { background:var(--bg); }
+#main-content[data-page="fees"] .ab.vv:hover { color:#4f46e5; border-color:#c7d2fe; background:var(--blue-l); }
+#main-content[data-page="fees"] .ab.pa:hover { color:#16a34a; border-color:#bbf7d0; background:var(--green-l); }
+#main-content[data-page="fees"] .ab.rm:hover { color:#c2410c; border-color:#fed7aa; background:var(--orange-l); }
+#main-content[data-page="fees"] .ab.ed:hover { color:var(--purple); border-color:#e9d5ff; background:var(--purple-l); }
+#main-content[data-page="fees"] .ab.dl:hover { color:var(--red); border-color:#fecaca; background:var(--red-l); }
+#main-content[data-page="fees"] .pl { font-size:13px; font-weight:700; color:var(--green); }
+#main-content[data-page="fees"] .er td { text-align:center; padding:60px; color:var(--t3); }
+
+#main-content[data-page="fees"] .ov { display:none; position:fixed; inset:0; background:rgba(26,29,46,.45); z-index:500; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(4px); }
+#main-content[data-page="fees"] .ov.on { display:flex; }
+#main-content[data-page="fees"] .md { background:var(--white); border-radius:18px; width:100%; max-width:520px; box-shadow:var(--sh-lg); animation:pi .2s ease; max-height:92vh; overflow-y:auto; }
+#main-content[data-page="fees"] .md-lg { max-width:660px; }
+#main-content[data-page="fees"] .md-xl { max-width:760px; }
+@keyframes pi{from{opacity:0;transform:scale(.95) translateY(8px);}to{opacity:1;transform:scale(1) translateY(0);}}
+#main-content[data-page="fees"] .mh { padding:22px 24px 0; display:flex; align-items:flex-start; justify-content:space-between; border-bottom: none; }
+#main-content[data-page="fees"] .mh h2 { font-size:18px; font-weight:800; color:var(--text); }
+#main-content[data-page="fees"] .msub { font-size:12px; color:var(--t3); margin-top:3px; }
+#main-content[data-page="fees"] .mc { background:none; border:none; color:var(--t3); cursor:pointer; font-size:18px; padding:2px 6px; border-radius:6px; transition:all .15s; line-height:1; }
+#main-content[data-page="fees"] .mc:hover { background:var(--bg); color:var(--text); }
+#main-content[data-page="fees"] .mb { padding:18px 24px; }
+#main-content[data-page="fees"] .mf { padding:0 24px 22px; display:flex; justify-content:flex-end; gap:10px; border-top: none; }
+#main-content[data-page="fees"] .mf.sp { justify-content:space-between; }
+#main-content[data-page="fees"] .fi { margin-bottom:14px; }
+#main-content[data-page="fees"] .fi label { display:block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--t3); margin-bottom:6px; }
+#main-content[data-page="fees"] .fi input, #main-content[data-page="fees"] .fi select, #main-content[data-page="fees"] .fi textarea { width:100%; background:var(--bg); border:1.5px solid var(--border); border-radius:var(--rs); padding:10px 14px; font-family:'Plus Jakarta Sans',sans-serif; font-size:13px; color:var(--text); outline:none; transition:border-color .15s; }
+#main-content[data-page="fees"] .fi input:focus, #main-content[data-page="fees"] .fi select:focus, #main-content[data-page="fees"] .fi textarea:focus { border-color:var(--blue); background:#fff; box-shadow:0 0 0 3px rgba(79,70,229,.08); }
+#main-content[data-page="fees"] .fi input::placeholder, #main-content[data-page="fees"] .fi textarea::placeholder { color:var(--t3); }
+#main-content[data-page="fees"] .fi select option { background:#fff; color:var(--text); }
+#main-content[data-page="fees"] .fi .ferr { font-size:11px; color:var(--red); margin-top:4px; display:none; }
+#main-content[data-page="fees"] .fi.err input, #main-content[data-page="fees"] .fi.err select { border-color:var(--red); background:var(--red-l); }
+#main-content[data-page="fees"] .fi.err .ferr { display:block; }
+#main-content[data-page="fees"] .frow { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+#main-content[data-page="fees"] .frow3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+#main-content[data-page="fees"] .dv { height:1px; background:var(--border); margin:14px 0; }
+#main-content[data-page="fees"] .slbl { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--t3); margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+#main-content[data-page="fees"] .slbl::after { content:''; flex:1; height:1px; background:var(--border); }
+#main-content[data-page="fees"] .pr { background:var(--bg); border:1px solid var(--border); border-radius:var(--rs); padding:11px 14px; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; }
+#main-content[data-page="fees"] .pd { font-size:11px; color:var(--t3); } #main-content[data-page="fees"] .pn { font-size:12px; color:var(--t2); margin-top:2px; }
+#main-content[data-page="fees"] .pra { font-size:14px; font-weight:700; color:var(--green); }
+#main-content[data-page="fees"] .prd { background:none; border:none; color:var(--t3); cursor:pointer; font-size:14px; padding:4px 8px; border-radius:5px; transition:all .15s; }
+#main-content[data-page="fees"] .prd:hover { color:var(--red); background:var(--red-l); }
+#main-content[data-page="fees"] .apa { border:1.5px dashed var(--border); border-radius:var(--rs); padding:16px; margin-top:4px; }
+#main-content[data-page="fees"] .apt { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--t3); margin-bottom:12px; }
+#main-content[data-page="fees"] .sumr { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-top:1px solid var(--border); }
+#main-content[data-page="fees"] .sumr:first-child { border-top:none; }
+#main-content[data-page="fees"] .suml { font-size:12px; color:var(--t3); } #main-content[data-page="fees"] .sumv { font-size:13px; font-weight:700; color:var(--text); }
+#main-content[data-page="fees"] .dg { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+#main-content[data-page="fees"] .di { background:var(--bg); border-radius:var(--rs); padding:11px 14px; }
+#main-content[data-page="fees"] .dil { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--t3); margin-bottom:4px; }
+#main-content[data-page="fees"] .div { font-size:14px; font-weight:600; color:var(--text); }
+#main-content[data-page="fees"] .rprev { background:var(--bg); border:1px solid var(--border); border-radius:var(--rs); padding:14px; font-size:12px; color:var(--t2); line-height:1.7; font-style:italic; }
+
+#main-content[data-page="fees"] .month-dropdown { position:relative; }
+#main-content[data-page="fees"] .month-dropdown-btn { display:inline-flex; align-items:center; gap:8px; padding:9px 14px; border-radius:var(--rs); border:1.5px solid var(--border); background:var(--white); color:var(--t2); font-family:'Plus Jakarta Sans',sans-serif; font-size:13px; font-weight:500; cursor:pointer; transition:all .15s; }
+#main-content[data-page="fees"] .month-dropdown-btn:hover { border-color:var(--blue); color:var(--text); }
+#main-content[data-page="fees"] .month-dropdown-btn.has-selection { border-color:var(--blue); color:var(--blue); background:var(--blue-l); font-weight:600; }
+#main-content[data-page="fees"] .month-dropdown-panel { position:absolute; top:calc(100% + 6px); left:0; min-width:200px; background:var(--white); border:1px solid var(--border); border-radius:var(--rs); box-shadow:var(--sh-md); padding:6px; z-index:100; opacity:0; visibility:hidden; transform:translateY(-8px); transition:all .15s; }
+#main-content[data-page="fees"] .month-dropdown.open .month-dropdown-panel { opacity:1; visibility:visible; transform:translateY(0); }
+#main-content[data-page="fees"] .month-dropdown-item { padding:8px 12px; border-radius:7px; font-size:13px; font-weight:500; color:var(--t2); cursor:pointer; transition:all .15s; margin-bottom:2px; }
+#main-content[data-page="fees"] .month-dropdown-item:hover { background:var(--bg); color:var(--text); }
+#main-content[data-page="fees"] .month-dropdown-item.active { background:var(--blue); color:#fff; }
