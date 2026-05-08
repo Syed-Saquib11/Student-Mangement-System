@@ -621,9 +621,10 @@ function _addReminder() {
   };
   document.getElementById('rem-modal-close-btn').addEventListener('click', closeMod);
   document.getElementById('rem-modal-cancel-btn').addEventListener('click', closeMod);
-  document.getElementById('reminder-modal-overlay').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) closeMod();
-  });
+  // ESC-only close - backdrop click disabled
+  // document.getElementById('reminder-modal-overlay').addEventListener('click', (e) => {
+  //   if (e.target === e.currentTarget) closeMod();
+  // });
 
   document.getElementById('rem-modal-save-btn').addEventListener('click', () => {
     const lbl = document.getElementById('inp-rem-label').value.trim();

@@ -66,15 +66,16 @@ const COURSE_GRADIENTS = [
     document.getElementById('et-add-btn').addEventListener('click', addEditTopic);
 
     // Backdrop close
-    document.getElementById('add-course-modal').addEventListener('click', (e) => {
-      if (e.target.id === 'add-course-modal') closeCourseModal();
-    });
-    document.getElementById('delete-course-modal').addEventListener('click', (e) => {
-      if (e.target.id === 'delete-course-modal') closeDeleteModal();
-    });
-    document.getElementById('edit-topics-modal').addEventListener('click', (e) => {
-      if (e.target.id === 'edit-topics-modal') closeEditTopicsModal();
-    });
+    // ESC-only close - backdrop click disabled
+    // document.getElementById('add-course-modal').addEventListener('click', (e) => {
+    //   if (e.target.id === 'add-course-modal') closeCourseModal();
+    // });
+    // document.getElementById('delete-course-modal').addEventListener('click', (e) => {
+    //   if (e.target.id === 'delete-course-modal') closeDeleteModal();
+    // });
+    // document.getElementById('edit-topics-modal').addEventListener('click', (e) => {
+    //   if (e.target.id === 'edit-topics-modal') closeEditTopicsModal();
+    // });
   
     // Live preview inputs
     document.getElementById('ac-name').addEventListener('input', livePreview);

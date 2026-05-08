@@ -816,9 +816,10 @@ function showDeleteConfirmModal(title, itemName, warningText) {
     cancelBtn.addEventListener('click', () => closeModal(false));
     confirmBtn.addEventListener('click', () => closeModal(true));
     
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) closeModal(false);
-    });
+    // ESC-only close - backdrop click disabled
+    // overlay.addEventListener('click', (e) => {
+    //   if (e.target === overlay) closeModal(false);
+    // });
   });
 }
 

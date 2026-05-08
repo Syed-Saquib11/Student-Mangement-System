@@ -88,11 +88,12 @@ async function initSlots() {
   safeBind('cancel-slot-confirm', 'click', _closeConfirm);
 
   // Backdrop close for all modals
-  ['add-slot-modal', 'edit-slot-modal', 'slot-picker-modal', 'slot-confirm-modal'].forEach(id => {
-    safeBind(id, 'click', (e) => {
-      if (e.target.id === id) document.getElementById(id).classList.remove('active');
-    });
-  });
+  // ESC-only close - backdrop click disabled
+  // ['add-slot-modal', 'edit-slot-modal', 'slot-picker-modal', 'slot-confirm-modal'].forEach(id => {
+  //   safeBind(id, 'click', (e) => {
+  //     if (e.target.id === id) document.getElementById(id).classList.remove('active');
+  //   });
+  // });
 
   // Escape key
   document.addEventListener('keydown', _slotsKeyHandler);
