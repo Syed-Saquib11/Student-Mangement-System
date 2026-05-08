@@ -3,7 +3,7 @@ window.feesObj = {};
 window.initFees = function () {
   const AVS = ['#4f46e5', '#22c55e', '#ef4444', '#f97316', '#7c3aed', '#06b6d4', '#ec4899', '#f59e0b', '#3b82f6', '#10b981', '#6366f1', '#14b8a6'];
 
-  let fees = [], sflt = 'all', srtF = 'recent', srtA = false, detId = null, editId = null, cfCb = null;
+  let fees = [], allCourses = [], sflt = 'all', srtF = 'recent', srtA = false, detId = null, editId = null, cfCb = null;
   let currentPage = 1;
   const PAGE_SIZE = 10;
 
@@ -155,11 +155,11 @@ window.initFees = function () {
   async function load() {
     try {
       const dbFees = await window.api.getFees();
-      let courses = [];
-      try { courses = await window.api.getCourses(); } catch (e) { }
+      allCourses = [];
+      try { allCourses = await window.api.getCourses(); } catch (e) { }
 
       if (dbFees && dbFees.length > 0) {
-        const cMap = new Map((courses || []).map(c => [String(c.id), c]));
+        const cMap = new Map((allCourses || []).map(c => [String(c.id), c]));
         fees = dbFees.map(f => {
           const c = cMap.get(String(f.courseId));
           return {
@@ -289,14 +289,17 @@ window.initFees = function () {
       </div>` : ''}
     `;
 
-    document.getElementById('cp').textContent = p + '%';
-    document.getElementById('cm').textContent = fmt(totalOwedAll);
-    requestAnimationFrame(() => { document.getElementById('cf').style.width = p + '%'; });
+    // UI update for removed progress section
+    // document.getElementById('cp').textContent = p + '%';
+    // document.getElementById('cm').textContent = fmt(totalOwedAll);
+    // requestAnimationFrame(() => { document.getElementById('cf').style.width = p + '%'; });
   }
 
   function updFilters() {
     const sel2 = document.getElementById('cf2'), c2 = sel2.value;
-    const cs = [...new Set(fees.map(f => f.course))].sort();
+    // Use real-time courses from Course Management
+    const cs = [...new Set(allCourses.map(c => c.code || c.name || String(c.id)))].sort();
+    
     sel2.innerHTML = '<option value="">All Courses</option>' + cs.map(c => `<option value="${c}"${c === c2 ? ' selected' : ''}>${c}</option>`).join('');
     document.getElementById('clist').innerHTML = [...cs].map(c => `<option value="${c}">`).join('');
   }
@@ -333,7 +336,9 @@ window.initFees = function () {
     const co = document.getElementById('cf2').value;
     return fees.filter(f => {
       const mq = !q || (f.name.toLowerCase().includes(q) || f.course.toLowerCase().includes(q) || f.sid.toLowerCase().includes(q) || f.grade.toLowerCase().includes(q));
-      return mq && (!co || f.course === co) && (sflt === 'all' || gst(f) === sflt);
+      const st = gst(f);
+      const ms = (sflt === 'all' || st === sflt || (sflt === 'unpaid' && st === 'overdue'));
+      return mq && (!co || f.course === co) && ms;
     }).sort((a, b) => {
       // Inactive always sink to bottom
       const aInact = (String(a.studentStatus).toLowerCase() === 'inactive') ? 1 : 0;
@@ -852,32 +857,96 @@ window.initFees = function () {
 
   function delPay(i) {
     const f = fees.find(x => x.id === detId);
+    if (!f) {
+      console.error('[Fees] delPay: student record not found in fees list');
+      return;
+    }
     const payment = f.payments[i];
+    if (!payment) {
+      console.error(`[Fees] delPay: payment at index ${i} not found`);
+      return;
+    }
 
     // ── Section 12 guard: warn about waterfall consequences ─────────────────
-    // Check if this payment's period was previously "Paid"
     const wasFullyPaid = bal(f) <= 0;
 
     showCf(
       '⚠️ Delete Payment?',
-      `Deleting this payment may reopen previously settled billing periods. The waterfall will be recalculated from this point.<br><br><strong>This cannot be undone.</strong>`,
+      `Deleting this payment of <strong>${fmt(payment.amount)}</strong> recorded on <strong>${payment.paymentDate}</strong> may reopen previously settled billing periods. The waterfall will be recalculated from this point.<br><br><strong>This cannot be undone.</strong>`,
       async () => {
-        if (!payment || !payment.id) return;
-        await window.api.deletePayment(payment.id);
-        await load();
-        bldDet();
-        const updated = fees.find(x => x.id === detId);
-        toast('Payment deleted', 'b');
-        // Warn if a settled period has been reopened
-        if (wasFullyPaid && updated && bal(updated) > 0) {
-          setTimeout(() => toast('⚠️ A previously paid period is now unpaid.', 'w'), 400);
+        console.log(`[Fees] Deleting payment ID ${payment.id} for student ${f.name}`);
+        if (!payment || !payment.id) {
+          console.error('[Fees] Cannot delete payment: Missing payment ID');
+          toast('Error: Missing payment identification', 'r');
+          return;
+        }
+
+        try {
+          const result = await window.api.deletePayment(payment.id);
+          console.log('[Fees] deletePayment API result:', result);
+          
+          await load();
+          bldDet();
+          
+          const updated = fees.find(x => x.id === detId);
+          toast('Payment deleted', 'b');
+          
+          if (wasFullyPaid && updated && bal(updated) > 0) {
+            setTimeout(() => toast('⚠️ A previously paid period is now unpaid.', 'w'), 400);
+          }
+        } catch (err) {
+          console.error('[Fees] deletePayment API failed:', err);
+          throw err; // showCf will toast the error
         }
       }
     );
   }
 
-  function delFromDet() { toast('To delete a student\'s fee record, remove the student from the Students section.', 'w'); }
-  function delRec(id) { toast('To delete a student\'s fee record, remove the student from the Students section.', 'w'); }
+  async function delRec(id) {
+    const f = fees.find(x => x.id === id);
+    if (!f) {
+      console.error(`[Fees] Cannot delete: Student not found with ID ${id}`);
+      toast('Student record not found', 'r');
+      return;
+    }
+
+    showCf(
+      '⚠️ Delete Student Record?',
+      `Are you sure you want to permanently delete <strong>${f.name}</strong>?<br><br>This will remove all student data, fee history, and payment records. This action cannot be undone.`,
+      async () => {
+        console.log(`[Fees] Deleting student ${f.name} (${id})`);
+        try {
+          await window.api.deleteStudent(id);
+          toast(`✓ ${f.name} has been deleted.`, 'g');
+          await load();
+        } catch (err) {
+          throw err; // showCf handles the error display
+        }
+      }
+    );
+  }
+
+  function delFromDet() {
+    if (!detId) return;
+    const f = fees.find(x => x.id === detId);
+    if (!f) return;
+
+    showCf(
+      '⚠️ Delete Student Record?',
+      `Are you sure you want to permanently delete <strong>${f.name}</strong>?<br><br>This will remove all student data, fee history, and payment records. This action cannot be undone.`,
+      async () => {
+        console.log(`[Fees] Deleting student ${f.name} (${detId}) from detail view`);
+        try {
+          await window.api.deleteStudent(detId);
+          closeDet();
+          toast(`✓ ${f.name} has been deleted.`, 'g');
+          await load();
+        } catch (err) {
+          throw err;
+        }
+      }
+    );
+  }
 
   // ─────────────────────────────────────────────────────────────────────────────
   // REMINDER MODAL
@@ -967,15 +1036,46 @@ window.initFees = function () {
   // CONFIRM DIALOG
   // ─────────────────────────────────────────────────────────────────────────────
   function showCf(title, msg, cb) {
+    console.log(`[Fees] Opening confirmation: ${title}`);
     document.getElementById('cft').textContent = title;
     document.getElementById('cfm').innerHTML = msg;
-    document.getElementById('cfMd').classList.add('on');
+    const modal = document.getElementById('cfMd');
+    const okBtn = document.getElementById('cfok');
+    
+    modal.classList.add('on');
     cfCb = cb;
-    document.getElementById('cfok').onclick = () => { closeCf(); cfCb && cfCb(); };
+
+    okBtn.disabled = false;
+    okBtn.textContent = 'Confirm';
+    okBtn.onclick = async () => {
+      console.log(`[Fees] Confirmation accepted: ${title}`);
+      const currentCb = cfCb;
+      if (!currentCb) return;
+
+      okBtn.disabled = true;
+      okBtn.textContent = 'Processing...';
+
+      try {
+        await currentCb();
+        console.log(`[Fees] Action completed successfully`);
+        closeCf();
+      } catch (err) {
+        console.error(`[Fees] Action failed:`, err);
+        toast('Operation failed: ' + (err.message || err), 'r');
+        okBtn.disabled = false;
+        okBtn.textContent = 'Try Again';
+      }
+    };
   }
+
   function closeCf() {
     document.getElementById('cfMd').classList.remove('on');
     cfCb = null;
+    const okBtn = document.getElementById('cfok');
+    if (okBtn) {
+      okBtn.disabled = false;
+      okBtn.textContent = 'Confirm';
+    }
     if (window._feeChangeResolve) {
       window._feeChangeResolve(false);
       window._feeChangeResolve = null;
