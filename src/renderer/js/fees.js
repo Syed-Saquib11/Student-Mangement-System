@@ -3,7 +3,7 @@ window.feesObj = {};
 window.initFees = function () {
   const AVS = ['#4f46e5', '#22c55e', '#ef4444', '#f97316', '#7c3aed', '#06b6d4', '#ec4899', '#f59e0b', '#3b82f6', '#10b981', '#6366f1', '#14b8a6'];
 
-  let fees = [], sflt = 'all', srtF = 'recent', srtA = false, detId = null, editId = null, cfCb = null;
+  let fees = [], allCourses = [], sflt = 'all', srtF = 'recent', srtA = false, detId = null, editId = null, cfCb = null;
   let currentPage = 1;
   const PAGE_SIZE = 10;
 
@@ -102,15 +102,6 @@ window.initFees = function () {
   // Outstanding balance (never negative)
   const bal = (f) => Math.max(0, totalOwed(f) - allPaid(f));
 
-  // Payments made in the current window only
-  const curPaid = (f) => {
-    const periodStart = getCurrentPeriodStart(f.admissionDate);
-    const periodDue = getCurrentPeriodDue(f);
-    return f.payments
-      .filter(p => p.paymentDate >= periodStart && p.paymentDate <= periodDue)
-      .reduce((s, p) => s + Number(p.amount || 0), 0);
-  };
-
   // How many full months are completely missed (integer floors)
   const missedPeriods = (f) => {
     const periods = getPeriodsElapsed(f.admissionDate);
@@ -129,11 +120,12 @@ window.initFees = function () {
     return Number(f.total) * (missed - 1);
   };
 
+  // Lifetime percentage: allPaid / totalOwed (accumulated debt)
+  // Never exceeds 100, never goes below 0
   const pct = (f) => {
-    if (getPeriodsElapsed(f.admissionDate) === 0) return 0;
-    return f.total > 0
-      ? Math.min(100, Math.round(curPaid(f) / f.total * 100))
-      : 0;
+    const owed = totalOwed(f);
+    if (owed <= 0) return 0;
+    return Math.min(100, Math.max(0, Math.round(allPaid(f) / owed * 100)));
   };
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -163,11 +155,11 @@ window.initFees = function () {
   async function load() {
     try {
       const dbFees = await window.api.getFees();
-      let courses = [];
-      try { courses = await window.api.getCourses(); } catch (e) { }
+      allCourses = [];
+      try { allCourses = await window.api.getCourses(); } catch (e) { }
 
       if (dbFees && dbFees.length > 0) {
-        const cMap = new Map((courses || []).map(c => [String(c.id), c]));
+        const cMap = new Map((allCourses || []).map(c => [String(c.id), c]));
         fees = dbFees.map(f => {
           const c = cMap.get(String(f.courseId));
           return {
@@ -297,14 +289,17 @@ window.initFees = function () {
       </div>` : ''}
     `;
 
-    document.getElementById('cp').textContent = p + '%';
-    document.getElementById('cm').textContent = fmt(totalOwedAll);
-    requestAnimationFrame(() => { document.getElementById('cf').style.width = p + '%'; });
+    // UI update for removed progress section
+    // document.getElementById('cp').textContent = p + '%';
+    // document.getElementById('cm').textContent = fmt(totalOwedAll);
+    // requestAnimationFrame(() => { document.getElementById('cf').style.width = p + '%'; });
   }
 
   function updFilters() {
     const sel2 = document.getElementById('cf2'), c2 = sel2.value;
-    const cs = [...new Set(fees.map(f => f.course))].sort();
+    // Use real-time courses from Course Management
+    const cs = [...new Set(allCourses.map(c => c.code || c.name || String(c.id)))].sort();
+    
     sel2.innerHTML = '<option value="">All Courses</option>' + cs.map(c => `<option value="${c}"${c === c2 ? ' selected' : ''}>${c}</option>`).join('');
     document.getElementById('clist').innerHTML = [...cs].map(c => `<option value="${c}">`).join('');
   }
@@ -341,7 +336,9 @@ window.initFees = function () {
     const co = document.getElementById('cf2').value;
     return fees.filter(f => {
       const mq = !q || (f.name.toLowerCase().includes(q) || f.course.toLowerCase().includes(q) || f.sid.toLowerCase().includes(q) || f.grade.toLowerCase().includes(q));
-      return mq && (!co || f.course === co) && (sflt === 'all' || gst(f) === sflt);
+      const st = gst(f);
+      const ms = (sflt === 'all' || st === sflt || (sflt === 'unpaid' && st === 'overdue'));
+      return mq && (!co || f.course === co) && ms;
     }).sort((a, b) => {
       // Inactive always sink to bottom
       const aInact = (String(a.studentStatus).toLowerCase() === 'inactive') ? 1 : 0;
@@ -352,7 +349,7 @@ window.initFees = function () {
       if (srtF === 'name') { va = a.name; vb = b.name; }
       else if (srtF === 'course') { va = a.course; vb = b.course; }
       else if (srtF === 'total') { va = a.total; vb = b.total; }
-      else if (srtF === 'paid') { va = curPaid(a); vb = curPaid(b); }
+      else if (srtF === 'paid') { va = allPaid(a); vb = allPaid(b); }
       else if (srtF === 'balance') { va = bal(a); vb = bal(b); }
       else if (srtF === 'due') { va = getCurrentPeriodDue(a); vb = getCurrentPeriodDue(b); }
       else if (srtF === 'status') { va = gst(a); vb = gst(b); }
@@ -432,7 +429,8 @@ window.initFees = function () {
     }
 
     tbody.innerHTML = rows.map(f => {
-      const cp = curPaid(f);
+      const lifetimePaid = allPaid(f);
+      const lifetimeOwed = totalOwed(f);
       const b = bal(f);
       const pc = pct(f);
       const st = gst(f);
@@ -499,8 +497,8 @@ window.initFees = function () {
         <td><div class="stc"><div class="av" style="background:${av}">${ini(f.name)}</div><div><div class="stn">${f.name}</div><div class="stg">${f.grade || ''}</div></div></div></td>
         <td><span class="course-badge">${f.course}</span></td>
         <td><span class="famt">${fmt(f.total)}</span></td>
-        <td class="hide-mobile"><div class="pc"><div class="pt"><span class="pv">${fmt(cp)}</span><span class="pp">${pc}%</span></div><div class="pb"><div class="pf ${bc}" style="width:${pc}%"></div></div></div></td>
-        <td><span class="ba ${blc}">${b > 0 ? fmt(b) : '✓ Cleared'}</span></td>
+        <td class="paid-cell"><div class="pc"><span class="pv">${fmt(lifetimePaid)}</span><span class="pp ${bc}">${pc === 100 ? '100% Cleared' : pc + '% Paid'}</span><div class="pb"><div class="pf ${bc}" style="width:${pc}%"></div></div></div></td>
+        <td class="balance-cell"><div class="balance-container"><span class="amount ba ${blc}">${b > 0 ? fmt(b) : '₹0'}</span><span class="bdg ${b === 0 ? 'b-paid' : badgeClass}">${b === 0 ? '100% Cleared' : statusLabel}</span></div></td>
         <td>${dateDisplay}</td>
         <td class="hide-mobile"><span class="bdg ${badgeClass}">${statusLabel}</span></td>
         <td>
@@ -761,12 +759,12 @@ window.initFees = function () {
     const f = fees.find(x => x.id === detId);
     if (!f) return;
 
-    const cp = curPaid(f);
+    const totalP = allPaid(f);
+    const lifetimeOwed = totalOwed(f);
     const b = bal(f);
     const pc2 = pct(f);
     const st = gst(f);
     const co = carryOver(f);
-    const totalP = allPaid(f);
     const periodDue = getCurrentPeriodDue(f);
     const missed = missedPeriods(f);
     const daysLeft = Math.round((new Date(periodDue) - new Date()) / (1000 * 60 * 60 * 24));
@@ -775,7 +773,7 @@ window.initFees = function () {
     document.getElementById('dms').textContent = `${f.course} · ${f.grade}`;
     document.getElementById('dppct').textContent = pc2 + '%';
     document.getElementById('dpbar').style.width = pc2 + '%';
-    document.getElementById('dplbl').textContent = `This Period — ${fmt(cp)} of ${fmt(f.total)} paid`;
+    document.getElementById('dplbl').textContent = `Overall — ${fmt(totalP)} of ${fmt(lifetimeOwed)} paid`;
 
     let subText, subColor;
     switch (st) {
@@ -788,9 +786,9 @@ window.initFees = function () {
 
     document.getElementById('dgrid').innerHTML = `
       <div class="di"><div class="dil">Monthly Fee</div><div class="div">${fmt(f.total)}</div></div>
-      <div class="di"><div class="dil">Paid This Period</div><div class="div" style="color:var(--green)">${fmt(cp)}</div></div>
-      <div class="di"><div class="dil">Carry-over</div><div class="div" style="color:${co > 0 ? 'var(--red)' : 'var(--green)'}">${co > 0 ? fmt(co) : '✓ None'}</div></div>
-      <div class="di"><div class="dil">Total Balance</div><div class="div" style="color:${b > 0 ? 'var(--orange)' : 'var(--green)'}">${b > 0 ? fmt(b) : '✓ Cleared'}</div></div>
+      <div class="di"><div class="dil">Total Accrued Due</div><div class="div">${fmt(lifetimeOwed)}</div></div>
+      <div class="di"><div class="dil">Lifetime Paid</div><div class="div" style="color:var(--green)">${fmt(totalP)}</div></div>
+      <div class="di"><div class="dil">Outstanding Balance</div><div class="div" style="color:${b > 0 ? 'var(--orange)' : 'var(--green)'}">${b > 0 ? fmt(b) : '✓ Cleared'}</div></div>
       <div class="di" style="grid-column:1/-1"><div class="dil">Status</div><div class="div"><span style="font-weight:700; ${subColor}">${subText}</span></div></div>
       <div class="di"><div class="dil">Admission Date</div><div class="div">${f.admissionDate || '—'}</div></div>
       <div class="di"><div class="dil">Phone</div><div class="div">${f.phone || '—'}</div></div>
@@ -859,32 +857,96 @@ window.initFees = function () {
 
   function delPay(i) {
     const f = fees.find(x => x.id === detId);
+    if (!f) {
+      console.error('[Fees] delPay: student record not found in fees list');
+      return;
+    }
     const payment = f.payments[i];
+    if (!payment) {
+      console.error(`[Fees] delPay: payment at index ${i} not found`);
+      return;
+    }
 
     // ── Section 12 guard: warn about waterfall consequences ─────────────────
-    // Check if this payment's period was previously "Paid"
     const wasFullyPaid = bal(f) <= 0;
 
     showCf(
       '⚠️ Delete Payment?',
-      `Deleting this payment may reopen previously settled billing periods. The waterfall will be recalculated from this point.<br><br><strong>This cannot be undone.</strong>`,
+      `Deleting this payment of <strong>${fmt(payment.amount)}</strong> recorded on <strong>${payment.paymentDate}</strong> may reopen previously settled billing periods. The waterfall will be recalculated from this point.<br><br><strong>This cannot be undone.</strong>`,
       async () => {
-        if (!payment || !payment.id) return;
-        await window.api.deletePayment(payment.id);
-        await load();
-        bldDet();
-        const updated = fees.find(x => x.id === detId);
-        toast('Payment deleted', 'b');
-        // Warn if a settled period has been reopened
-        if (wasFullyPaid && updated && bal(updated) > 0) {
-          setTimeout(() => toast('⚠️ A previously paid period is now unpaid.', 'w'), 400);
+        console.log(`[Fees] Deleting payment ID ${payment.id} for student ${f.name}`);
+        if (!payment || !payment.id) {
+          console.error('[Fees] Cannot delete payment: Missing payment ID');
+          toast('Error: Missing payment identification', 'r');
+          return;
+        }
+
+        try {
+          const result = await window.api.deletePayment(payment.id);
+          console.log('[Fees] deletePayment API result:', result);
+          
+          await load();
+          bldDet();
+          
+          const updated = fees.find(x => x.id === detId);
+          toast('Payment deleted', 'b');
+          
+          if (wasFullyPaid && updated && bal(updated) > 0) {
+            setTimeout(() => toast('⚠️ A previously paid period is now unpaid.', 'w'), 400);
+          }
+        } catch (err) {
+          console.error('[Fees] deletePayment API failed:', err);
+          throw err; // showCf will toast the error
         }
       }
     );
   }
 
-  function delFromDet() { toast('To delete a student\'s fee record, remove the student from the Students section.', 'w'); }
-  function delRec(id) { toast('To delete a student\'s fee record, remove the student from the Students section.', 'w'); }
+  async function delRec(id) {
+    const f = fees.find(x => x.id === id);
+    if (!f) {
+      console.error(`[Fees] Cannot delete: Student not found with ID ${id}`);
+      toast('Student record not found', 'r');
+      return;
+    }
+
+    showCf(
+      '⚠️ Delete Student Record?',
+      `Are you sure you want to permanently delete <strong>${f.name}</strong>?<br><br>This will remove all student data, fee history, and payment records. This action cannot be undone.`,
+      async () => {
+        console.log(`[Fees] Deleting student ${f.name} (${id})`);
+        try {
+          await window.api.deleteStudent(id);
+          toast(`✓ ${f.name} has been deleted.`, 'g');
+          await load();
+        } catch (err) {
+          throw err; // showCf handles the error display
+        }
+      }
+    );
+  }
+
+  function delFromDet() {
+    if (!detId) return;
+    const f = fees.find(x => x.id === detId);
+    if (!f) return;
+
+    showCf(
+      '⚠️ Delete Student Record?',
+      `Are you sure you want to permanently delete <strong>${f.name}</strong>?<br><br>This will remove all student data, fee history, and payment records. This action cannot be undone.`,
+      async () => {
+        console.log(`[Fees] Deleting student ${f.name} (${detId}) from detail view`);
+        try {
+          await window.api.deleteStudent(detId);
+          closeDet();
+          toast(`✓ ${f.name} has been deleted.`, 'g');
+          await load();
+        } catch (err) {
+          throw err;
+        }
+      }
+    );
+  }
 
   // ─────────────────────────────────────────────────────────────────────────────
   // REMINDER MODAL
@@ -974,15 +1036,46 @@ window.initFees = function () {
   // CONFIRM DIALOG
   // ─────────────────────────────────────────────────────────────────────────────
   function showCf(title, msg, cb) {
+    console.log(`[Fees] Opening confirmation: ${title}`);
     document.getElementById('cft').textContent = title;
     document.getElementById('cfm').innerHTML = msg;
-    document.getElementById('cfMd').classList.add('on');
+    const modal = document.getElementById('cfMd');
+    const okBtn = document.getElementById('cfok');
+    
+    modal.classList.add('on');
     cfCb = cb;
-    document.getElementById('cfok').onclick = () => { closeCf(); cfCb && cfCb(); };
+
+    okBtn.disabled = false;
+    okBtn.textContent = 'Confirm';
+    okBtn.onclick = async () => {
+      console.log(`[Fees] Confirmation accepted: ${title}`);
+      const currentCb = cfCb;
+      if (!currentCb) return;
+
+      okBtn.disabled = true;
+      okBtn.textContent = 'Processing...';
+
+      try {
+        await currentCb();
+        console.log(`[Fees] Action completed successfully`);
+        closeCf();
+      } catch (err) {
+        console.error(`[Fees] Action failed:`, err);
+        toast('Operation failed: ' + (err.message || err), 'r');
+        okBtn.disabled = false;
+        okBtn.textContent = 'Try Again';
+      }
+    };
   }
+
   function closeCf() {
     document.getElementById('cfMd').classList.remove('on');
     cfCb = null;
+    const okBtn = document.getElementById('cfok');
+    if (okBtn) {
+      okBtn.disabled = false;
+      okBtn.textContent = 'Confirm';
+    }
     if (window._feeChangeResolve) {
       window._feeChangeResolve(false);
       window._feeChangeResolve = null;
@@ -1039,17 +1132,18 @@ window.initFees = function () {
   // ─────────────────────────────────────────────────────────────────────────────
   // MODAL BACKDROP CLICK TO CLOSE
   // ─────────────────────────────────────────────────────────────────────────────
-  ['addMd', 'detMd', 'remMd', 'cfMd', 'histMd'].forEach(id => {
-    document.getElementById(id)?.addEventListener('click', function (e) {
-      if (e.target !== this) return;
-      if (id === 'addMd') closeAdd();
-      else if (id === 'detMd') closeDet();
-      else if (id === 'remMd') closeRem();
-      else if (id === 'cfMd') closeCf();
-      else if (id === 'histMd') closeHist();
-      else this.classList.remove('on');
-    });
-  });
+  // ESC-only close - backdrop click disabled
+  // ['addMd', 'detMd', 'remMd', 'cfMd', 'histMd'].forEach(id => {
+  //   document.getElementById(id)?.addEventListener('click', function (e) {
+  //     if (e.target !== this) return;
+  //     if (id === 'addMd') closeAdd();
+  //     else if (id === 'detMd') closeDet();
+  //     else if (id === 'remMd') closeRem();
+  //     else if (id === 'cfMd') closeCf();
+  //     else if (id === 'histMd') closeHist();
+  //     else this.classList.remove('on');
+  //   });
+  // });
 
   // ─────────────────────────────────────────────────────────────────────────────
   // EXPORT PUBLIC API

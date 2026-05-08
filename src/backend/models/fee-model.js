@@ -68,19 +68,38 @@ function getPaymentsForFeeId(feeId, callback) {
   });
 }
 
-// Calculate how many monthly billing periods have elapsed since admission
-function _getMonthsElapsed(admissionDateStr) {
-  if (!admissionDateStr) return 1;
+// ── Anchor-clamped period calculation (mirrors fees.js frontend exactly) ─────
+// A period is elapsed only when its due date has passed.
+// Period N due = admissionDate + N months (anchor-clamped for short months).
+// Returns 0 when student is inside their first billing window → nothing owed.
+function _getPeriodsElapsed(admissionDateStr) {
+  if (!admissionDateStr) return 0;
   const adm = new Date(admissionDateStr);
-  if (isNaN(adm.getTime())) return 1;
+  if (isNaN(adm.getTime())) return 0;
   const now = new Date();
-  let months = (now.getFullYear() - adm.getFullYear()) * 12 + (now.getMonth() - adm.getMonth());
-  if (now.getDate() < adm.getDate()) months--;
-  return Math.max(1, months + 1);
+
+  let months =
+    (now.getFullYear() - adm.getFullYear()) * 12 +
+    (now.getMonth() - adm.getMonth());
+
+  // Anchor-day clamping: handle short months (e.g. Jan 31 → Feb 28)
+  const anchorDay = adm.getDate();
+  const lastDayOfCurrentMonth = new Date(
+    now.getFullYear(), now.getMonth() + 1, 0
+  ).getDate();
+  const effectiveAnchor = Math.min(anchorDay, lastDayOfCurrentMonth);
+
+  // If today hasn't reached the anchor day this month,
+  // the current period's due date has NOT passed yet
+  if (now.getDate() < effectiveAnchor) months--;
+
+  // Minimum 0 — student may be inside their first window with nothing due yet
+  return Math.max(0, months);
 }
 
 function triggerFeeUpdate(feeId) {
-  // Monthly billing model: status = 'paid' if totalPaid >= monthlyFee × periodsElapsed
+  // Compute fee status using the same logic as the Fees page frontend (gst()).
+  // This ensures Students list and Dashboard always agree with the Fees section.
   const sqlSum = `SELECT COALESCE(SUM(amount), 0) as paidAmount FROM payments WHERE feeId = ?`;
   const sqlFee = `
     SELECT f.totalAmount, s.admissionDate
@@ -93,10 +112,27 @@ function triggerFeeUpdate(feeId) {
     db.get(sqlFee, [feeId], (err, rowFee) => {
       if (err || !rowFee) return;
       const monthlyFee = rowFee.totalAmount;
-      const periodsElapsed = _getMonthsElapsed(rowFee.admissionDate);
+      const periodsElapsed = _getPeriodsElapsed(rowFee.admissionDate);
       const totalOwed = monthlyFee * periodsElapsed;
       const totalPaid = rowSum.paidAmount;
-      const newStatus = (monthlyFee <= 0 || totalPaid >= totalOwed) ? 'paid' : 'pending';
+      const balance = Math.max(0, totalOwed - totalPaid);
+
+      // 4-state logic matching frontend gst(), mapped to 2-state column:
+      //   fee <= 0           → 'paid'  (no fee configured)
+      //   periodsElapsed = 0 → 'paid'  (due-soon: inside first window, nothing owed)
+      //   balance <= 0       → 'paid'  (all dues cleared)
+      //   balance > 0        → 'pending' (unpaid or overdue)
+      let newStatus;
+      if (monthlyFee <= 0) {
+        newStatus = 'paid';
+      } else if (periodsElapsed === 0) {
+        newStatus = 'paid';
+      } else if (balance <= 0) {
+        newStatus = 'paid';
+      } else {
+        newStatus = 'pending';
+      }
+
       const sqlUpdate = `UPDATE fees SET status = ? WHERE id = ?`;
       db.run(sqlUpdate, [newStatus, feeId]);
     });

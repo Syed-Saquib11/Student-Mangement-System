@@ -40,18 +40,22 @@ function bindKeyboardShortcuts() {
 }
 
 function _studentKeyHandler(e) {
+  // ESC-only close - backdrop click disabled
   if (e.key === 'Escape') {
     // Close any active modal
     const viewModal = document.getElementById('student-view-overlay');
     if (viewModal?.classList.contains('active')) {
-      viewModal.classList.remove('active');
+      closeModal();
     }
     
     const editModal = document.getElementById('student-modal-overlay');
     if (editModal?.classList.contains('active')) {
-      // Logic from closeBtn click
-      editModal.classList.remove('active');
-      setTimeout(() => { document.getElementById('modal-root').innerHTML = ''; }, 300);
+      closeModal();
+    }
+
+    const deleteModal = document.getElementById('delete-modal-overlay');
+    if (deleteModal?.classList.contains('active')) {
+      closeModal();
     }
 
     const importModal = document.getElementById('import-modal');
@@ -227,6 +231,7 @@ function renderTable(students) {
               <path d="M12 20h9"/>
               <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
             </svg>
+            <span>Edit</span>
           </button>
         </td>
         <td class="col-action">
@@ -242,6 +247,7 @@ function renderTable(students) {
                 <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/>
                 <circle cx="12" cy="12" r="3"/>
               </svg>
+              <span>View</span>
             </button>
             <button class="btn btn-sm btn-action btn-delete" onclick='openDeleteConfirm(${s.id}, ${JSON.stringify(fullName)})' title="Delete">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -665,9 +671,10 @@ function openStudentModal(student) {
   // Close handlers
   document.getElementById('modal-close-btn').addEventListener('click', closeModal);
   document.getElementById('modal-cancel-btn').addEventListener('click', closeModal);
-  document.getElementById('student-modal-overlay').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) closeModal();
-  });
+  // ESC-only close - backdrop click disabled
+  // document.getElementById('student-modal-overlay').addEventListener('click', (e) => {
+  //   if (e.target === e.currentTarget) closeModal();
+  // });
 
   // Save handler
   document.getElementById('modal-save-btn').addEventListener('click', handleSaveStudent);
@@ -1069,9 +1076,10 @@ function openStudentViewModal(student) {
     closeModal();
     openStudentModal(student);
   });
-  document.getElementById('student-view-overlay').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) closeModal();
-  });
+  // ESC-only close - backdrop click disabled
+  // document.getElementById('student-view-overlay').addEventListener('click', (e) => {
+  //   if (e.target === e.currentTarget) closeModal();
+  // });
 }
 
 // ── Delete Confirm ─────────────────────────────────────
@@ -1127,9 +1135,10 @@ window.openDeleteConfirm = function (id, name) {
 
   document.getElementById('del-close-btn').addEventListener('click', closeModal);
   document.getElementById('del-cancel-btn').addEventListener('click', closeModal);
-  document.getElementById('delete-modal-overlay').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) closeModal();
-  });
+  // ESC-only close - backdrop click disabled
+  // document.getElementById('delete-modal-overlay').addEventListener('click', (e) => {
+  //   if (e.target === e.currentTarget) closeModal();
+  // });
 
   document.getElementById('del-confirm-btn').addEventListener('click', async () => {
     const btn = document.getElementById('del-confirm-btn');
@@ -1229,9 +1238,10 @@ window.openRemovePhotoConfirm = function (id, studentId, name) {
   const close = () => { root.innerHTML = ''; };
   document.getElementById('photo-close-btn').addEventListener('click', close);
   document.getElementById('photo-cancel-btn').addEventListener('click', close);
-  document.getElementById('photo-remove-overlay').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) close();
-  });
+  // ESC-only close - backdrop click disabled
+  // document.getElementById('photo-remove-overlay').addEventListener('click', (e) => {
+  //   if (e.target === e.currentTarget) close();
+  // });
 
   document.getElementById('photo-confirm-btn').addEventListener('click', async () => {
     const btn = document.getElementById('photo-confirm-btn');
@@ -1474,10 +1484,10 @@ function initGoogleImportListeners() {
     modal.classList.add('active');
   });
 
-  // Click outside to close
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) modal.classList.remove('active');
-  });
+  // ESC-only close - backdrop click disabled
+  // modal.addEventListener('click', (e) => {
+  //   if (e.target === modal) modal.classList.remove('active');
+  // });
 
   // Closes the modal from the top-right X button
   document.getElementById('btn-close-import')?.addEventListener('click', () => { 

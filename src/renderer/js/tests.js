@@ -48,15 +48,22 @@ function bindKeyboardShortcuts() {
 }
 
 function _testsKeyHandler(e) {
+  // ESC-only close - backdrop click disabled
   if (e.key === 'Escape') {
     const editor = document.getElementById('test-editor-overlay');
-    if (!editor.classList.contains('hidden')) {
+    if (editor && !editor.classList.contains('hidden')) {
        editor.classList.add('hidden');
     }
 
     const importModal = document.getElementById('import-form-modal');
-    if (importModal.classList.contains('active')) {
+    if (importModal?.classList.contains('active')) {
        importModal.classList.remove('active');
+    }
+
+    // Dynamic modals in root
+    const root = document.getElementById('modal-root');
+    if (root && root.innerHTML !== '') {
+       root.innerHTML = '';
     }
   }
 
@@ -464,9 +471,10 @@ window.deleteTest = function (id) {
 
   const closeFn = () => { root.innerHTML = ''; };
   document.getElementById('del-cancel').addEventListener('click', closeFn);
-  document.getElementById('del-overlay').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) closeFn();
-  });
+  // ESC-only close - backdrop click disabled
+  // document.getElementById('del-overlay').addEventListener('click', (e) => {
+  //   if (e.target === e.currentTarget) closeFn();
+  // });
 
   document.getElementById('del-confirm').addEventListener('click', async () => {
     try {
@@ -504,9 +512,10 @@ window.deleteResult = function (resultId) {
 
   const closeFn = () => { root.innerHTML = ''; };
   document.getElementById('del-res-cancel').addEventListener('click', closeFn);
-  document.getElementById('del-res-overlay').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) closeFn();
-  });
+  // ESC-only close - backdrop click disabled
+  // document.getElementById('del-res-overlay').addEventListener('click', (e) => {
+  //   if (e.target === e.currentTarget) closeFn();
+  // });
 
   document.getElementById('del-res-confirm').addEventListener('click', async () => {
     try {
@@ -861,9 +870,10 @@ async function openTestModal() {
   const closeFn = () => { root.innerHTML = ''; };
   document.getElementById('tm-close').addEventListener('click', closeFn);
   document.getElementById('tm-cancel').addEventListener('click', closeFn);
-  document.getElementById('tm-overlay').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) closeFn();
-  });
+  // ESC-only close - backdrop click disabled
+  // document.getElementById('tm-overlay').addEventListener('click', (e) => {
+  //   if (e.target === e.currentTarget) closeFn();
+  // });
 
   // Dynamic question adder
   let totalMarks = 0;
@@ -1325,9 +1335,10 @@ async function handlePublishTest(testId, btnEl) {
   const closeFn = () => { root.innerHTML = ''; };
   document.getElementById('publish-close').addEventListener('click', closeFn);
   document.getElementById('publish-close-2').addEventListener('click', closeFn);
-  document.getElementById('publish-overlay').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) closeFn();
-  });
+  // ESC-only close - backdrop click disabled
+  // document.getElementById('publish-overlay').addEventListener('click', (e) => {
+  //   if (e.target === e.currentTarget) closeFn();
+  // });
 
   document.getElementById('publish-copy').addEventListener('click', () => {
     navigator.clipboard.writeText(result.url).then(() => {
@@ -1359,13 +1370,12 @@ function openFormImportModal() {
   document.getElementById('import-form-modal').classList.remove('hidden');
   document.getElementById('import-form-modal').classList.add('active');
 
-  // Backdrop close
-  const modal = document.getElementById('import-form-modal');
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.remove('active');
-    }
-  });
+  // ESC-only close - backdrop click disabled
+  // modal.addEventListener('click', (e) => {
+  //   if (e.target === modal) {
+  //     modal.classList.remove('active');
+  //   }
+  // });
 }
 
 async function loadFormPreview() {
