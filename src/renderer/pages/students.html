@@ -99,16 +99,21 @@
           <button id="btn-preview-desel-all" class="btn btn-sm">Deselect All</button>
         </div>
 
-        <div style="max-height:400px; overflow-y:auto; border:1px solid var(--border); margin-bottom:20px;">
-          <table class="table" style="width:100%; border-collapse:collapse;" id="preview-table">
-            <thead style="position:sticky; top:0; background:var(--bg-card);">
+        <div style="max-height: 25rem; overflow: auto; border: 1px solid var(--border); margin-bottom: 1.25rem; width: 100%;">
+          <table class="table" style="width: 100%; border-collapse: collapse; min-width: 65rem; table-layout: fixed; overflow-wrap: break-word; word-wrap: break-word;" id="preview-table">
+            <thead style="position: sticky; top: 0; background: var(--bg-card); z-index: 10; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
               <tr>
-                <th><input type="checkbox" id="master-checkbox" checked disabled></th>
-                <th>Name</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Course</th>
-                <th>Has Photo</th>
+                <th style="width: 3rem;"><input type="checkbox" id="master-checkbox" checked disabled></th>
+                <th style="width: 9rem;">Name</th>
+                <th style="width: 7.5rem;">Phone</th>
+                <th style="width: 12rem;">Email</th>
+                <th style="width: 12rem;">Course</th>
+                <th style="width: 6.5rem;">DOB</th>
+                <th style="width: 6.5rem;">Category</th>
+                <th style="width: 9rem;">Father</th>
+                <th style="width: 9rem;">Mother</th>
+                <th style="width: 14rem;">Address</th>
+                <th style="width: 6rem;">Has Photo</th>
               </tr>
             </thead>
             <tbody id="preview-tbody"></tbody>

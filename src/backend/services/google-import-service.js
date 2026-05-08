@@ -49,29 +49,45 @@ async function previewSheet(sheetIdOrUrl, courses) {
 
   const headers = allValues[0].map(h => h.trim().toLowerCase());
   
-  // Find column indices dynamically
-  const idxFullName = headers.findIndex(h => h.includes('full name'));
-  const idxPhone = headers.findIndex(h => h.includes('phone') || h.includes('mobile'));
-  const idxEmail = headers.findIndex(h => h.includes('email'));
-  const idxCourse = headers.findIndex(h => h.includes('course'));
-  const idxAddress = headers.findIndex(h => h.includes('address'));
-  const idxParentName = headers.findIndex(h => h.includes('parent') && h.includes('name'));
-  const idxParentPhone = headers.findIndex(h => h.includes('parent') && h.includes('phone'));
-  const idxPhoto = headers.findIndex(h => h.includes('photo'));
+  // Find ALL matching column indices dynamically
+  const findIndices = (condition) => headers.map((h, i) => condition(h) ? i : -1).filter(i => i !== -1);
+  
+  const indicesFullName = findIndices(h => h.includes('full name'));
+  const indicesPhone = findIndices(h => h.includes('phone') || h.includes('mobile'));
+  const indicesEmail = findIndices(h => h.includes('email'));
+  const indicesCourse = findIndices(h => h.includes('course'));
+  const indicesAddress = findIndices(h => h.includes('address'));
+  const indicesParentName = findIndices(h => h.includes('parent') && h.includes('name'));
+  const indicesParentPhone = findIndices(h => h.includes('parent') && h.includes('phone'));
+  const indicesPhoto = findIndices(h => h.includes('photo'));
+  const indicesDob = findIndices(h => h.includes('date of birth') || h.includes('dob'));
+  const indicesCategory = findIndices(h => h.includes('category'));
+  const indicesFatherName = findIndices(h => h.includes('father') && h.includes('name'));
+  const indicesMotherName = findIndices(h => h.includes('mother') && h.includes('name'));
+
+  const getValue = (row, indices) => {
+    // Look from right to left (newest columns first in Google Forms)
+    for (let i = indices.length - 1; i >= 0; i--) {
+      const val = row[indices[i]];
+      if (val && val.trim() !== '') return val.trim();
+    }
+    return '';
+  };
 
   const rows = [];
   const unmatchedCoursesSet = new Set();
 
   for (let i = 1; i < allValues.length; i++) {
     const row = allValues[i];
-    if (idxFullName === -1 || !row[idxFullName]) continue;
+    
+    const rawFullName = getValue(row, indicesFullName);
+    if (!rawFullName) continue;
 
-    const rawFullName = row[idxFullName] || '';
     const nameParts = rawFullName.split(' ');
     const firstName = nameParts[0];
     const lastName = nameParts.slice(1).join(' ');
 
-    const rawCourse = idxCourse !== -1 ? (row[idxCourse] || '').trim() : '';
+    const rawCourse = getValue(row, indicesCourse);
     let courseId = null;
 
     if (rawCourse) {
@@ -83,18 +99,22 @@ async function previewSheet(sheetIdOrUrl, courses) {
       }
     }
 
-    const drivePhotoStr = idxPhoto !== -1 ? row[idxPhoto] : null;
+    const drivePhotoStr = getValue(row, indicesPhoto);
 
     rows.push({
       firstName,
       lastName,
-      phone: idxPhone !== -1 ? row[idxPhone] : '',
-      email: idxEmail !== -1 ? row[idxEmail] : '',
+      phone: getValue(row, indicesPhone),
+      email: getValue(row, indicesEmail),
       rawCourseName: rawCourse,
       courseId,
-      address: idxAddress !== -1 ? row[idxAddress] : '',
-      parentName: idxParentName !== -1 ? row[idxParentName] : '',
-      parentPhone: idxParentPhone !== -1 ? row[idxParentPhone] : '',
+      address: getValue(row, indicesAddress),
+      parentName: getValue(row, indicesParentName),
+      parentPhone: getValue(row, indicesParentPhone),
+      dob: getValue(row, indicesDob),
+      category: getValue(row, indicesCategory),
+      fatherName: getValue(row, indicesFatherName),
+      motherName: getValue(row, indicesMotherName),
       drivePhotoUrl: extractFileId(drivePhotoStr) ? drivePhotoStr : null
     });
   }

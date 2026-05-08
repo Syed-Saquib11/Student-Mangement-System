@@ -156,27 +156,47 @@ function bulkInsertStudents(rows) {
     let inserted = 0;
     let skipped = 0;
     
-    db.serialize(() => {
-      db.run("BEGIN TRANSACTION");
-      
-      // Fetch existing students to prevent duplicates in-memory
-      db.all("SELECT firstName, lastName, phone FROM students", [], (err, existingRows) => {
-        const existingSet = new Set((existingRows || []).map(r => 
-          `${r.firstName.toLowerCase()}|${r.lastName.toLowerCase()}|${(r.phone || '').trim()}`
-        ));
+    // Fetch existing students to prevent duplicates in-memory
+    db.all("SELECT firstName, lastName, phone FROM students", [], (err, existingRows) => {
+      if (err) return reject(err);
 
+      const existingSet = new Set((existingRows || []).map(r => 
+        `${(r.firstName || '').toLowerCase()}|${(r.lastName || '').toLowerCase()}|${(r.phone || '').trim()}`
+      ));
+
+      db.serialize(() => {
+        db.run("BEGIN TRANSACTION");
+        
         const stmt = db.prepare(`
           INSERT OR IGNORE INTO students 
-          (studentId, firstName, lastName, phone, email, courseId, address, parentName, parentPhone, photo_path) 
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          (studentId, firstName, lastName, phone, email, courseId, address, parentName, parentPhone, photo_path, dob, category, fatherName, motherName) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
+
+        let pendingCount = rows.length;
+
+        const finalizeAndCommit = () => {
+          stmt.finalize();
+          db.run("COMMIT", (err) => {
+            if (err) reject(err);
+            else resolve({ inserted, skipped });
+          });
+        };
+
+        if (pendingCount === 0) {
+          return finalizeAndCommit();
+        }
 
         rows.forEach(row => {
           const key = `${(row.firstName || '').toLowerCase()}|${(row.lastName || '').toLowerCase()}|${(row.phone || '').trim()}`;
           if (existingSet.has(key)) {
             skipped++;
+            pendingCount--;
+            if (pendingCount === 0) finalizeAndCommit();
             return;
           }
+
+          existingSet.add(key); // Prevent duplicates within the same batch
 
           // Generate unique ID at insert time format: "STU" + Date.now() + Math.random()
           const uniqueStudentId = "STU" + Date.now() + Math.random().toString(36).substr(2,4).toUpperCase();
@@ -191,23 +211,25 @@ function bulkInsertStudents(rows) {
             row.address || null,
             row.parentName || null,
             row.parentPhone || null,
-            row.photo_path || null
+            row.photo_path || null,
+            row.dob || null,
+            row.category || null,
+            row.fatherName || null,
+            row.motherName || null
           ], function(err) {
             if (!err && this.changes > 0) {
               inserted++;
               // Automatically mirror into fees architecture so they appear instantly in the Fees tab
-              feeModel.ensureFeeRecord(this.lastID, 0, new Date().toISOString().slice(0, 10), 'pending', () => {});
+              feeModel.ensureFeeRecord(this.lastID, 0, new Date().toISOString().slice(0, 10), 'pending', () => {
+                pendingCount--;
+                if (pendingCount === 0) finalizeAndCommit();
+              });
             } else {
               skipped++;
+              pendingCount--;
+              if (pendingCount === 0) finalizeAndCommit();
             }
           });
-        });
-
-        stmt.finalize();
-
-        db.run("COMMIT", (err) => {
-          if (err) reject(err);
-          else resolve({ inserted, skipped });
         });
       });
     });

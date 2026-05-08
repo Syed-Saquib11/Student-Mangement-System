@@ -1530,6 +1530,11 @@ function initGoogleImportListeners() {
           <td>${r.phone}</td>
           <td>${r.email}</td>
           <td style="${!r.courseId ? 'color:var(--danger)' : ''}">${r.rawCourseName || '—'}</td>
+          <td>${r.dob || '—'}</td>
+          <td>${r.category || '—'}</td>
+          <td>${r.fatherName || '—'}</td>
+          <td>${r.motherName || '—'}</td>
+          <td>${r.address || '—'}</td>
           <td>${r.drivePhotoUrl ? '✓' : '—'}</td>
         </tr>
       `).join('');
