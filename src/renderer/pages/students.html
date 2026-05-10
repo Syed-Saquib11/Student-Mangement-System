@@ -80,11 +80,16 @@
       </div>
       
       <div id="import-step-1" class="import-step">
-        <label for="input-sheet-id">Google Sheet ID</label>
-        <input type="text" id="input-sheet-id" placeholder="Paste Google Sheet ID here" style="width:100%; margin-bottom:10px;" />
-        <small style="color:var(--text-muted); display:block; margin-bottom:20px;">Find the Sheet ID in the URL: docs.google.com/spreadsheets/d/<strong>YOUR_SHEET_ID_HERE</strong>/edit</small>
-        
-        <button id="btn-load-preview" class="btn btn-primary">Load Preview</button>
+        <div class="drive-picker-wrapper">
+          <button id="drivePickerBtn" class="btn btn-primary" type="button">
+            <span class="picker-btn-icon">📁</span>
+            <span class="picker-btn-label">Choose from Google Drive</span>
+          </button>
+        </div>
+        <div id="custom-picker-container" style="display:none; margin-top:20px; text-align:left;">
+          <h4 style="margin:0 0 10px 0; font-size:14px;">Select a Spreadsheet:</h4>
+          <div id="custom-picker-list" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; background: #fff;"></div>
+        </div>
         <p id="import-step1-status" style="margin-top:12px;"></p>
       </div>
 

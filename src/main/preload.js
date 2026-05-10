@@ -73,6 +73,9 @@ const bridge = {
   // ── SHELL ─────────────────────────────────────────────
   openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url),
 
+  googleGetToken:  () => ipcRenderer.invoke('google:getToken'),
+  googleGetDriveFiles: () => ipcRenderer.invoke('google:getDriveFiles'),
+  getGoogleConfig: () => ipcRenderer.invoke('google:getConfig'),
   googleGetStatus: () => ipcRenderer.invoke('google:getStatus'),
   googleConnect: () => ipcRenderer.invoke('google:connect'),
   googleDisconnect: () => ipcRenderer.invoke('google:disconnect'),

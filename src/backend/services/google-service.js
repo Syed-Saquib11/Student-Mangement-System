@@ -27,7 +27,6 @@ function loadCredentials() {
 // ── Scopes ────────────────────────────────────────────────────────────────────
 const SCOPES = [
     'https://www.googleapis.com/auth/drive.readonly',
-    'https://www.googleapis.com/auth/drive.file',
     'https://www.googleapis.com/auth/forms.body',
     'https://www.googleapis.com/auth/forms.responses.readonly',
     'https://www.googleapis.com/auth/spreadsheets.readonly',
@@ -302,9 +301,30 @@ async function getValidAccessToken() {
     return tokens.access_token;
 }
 
+async function getDriveFiles() {
+    const token = await getValidAccessToken();
+    const oAuth2Client = new google.auth.OAuth2();
+    oAuth2Client.setCredentials({ access_token: token });
+    
+    const drive = google.drive({ version: 'v3', auth: oAuth2Client });
+    
+    try {
+        const response = await drive.files.list({
+            q: "mimeType='application/vnd.google-apps.spreadsheet'",
+            fields: 'files(id, name, modifiedTime)',
+            orderBy: 'modifiedTime desc',
+            pageSize: 50
+        });
+        return response.data.files || [];
+    } catch (error) {
+        throw new Error('Failed to load Google Drive files: ' + error.message);
+    }
+}
+
 module.exports = {
     getStatus,
     connect,
     disconnect,
     getValidAccessToken,
+    getDriveFiles
 };

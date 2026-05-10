@@ -1473,8 +1473,8 @@ function initGoogleImportListeners() {
   
   // Opens the modal and resets to Step 1 (Input Sheet ID)
   document.getElementById('btn-open-import')?.addEventListener('click', () => {
-    document.getElementById('input-sheet-id').value = '';
-    document.getElementById('import-step1-status').textContent = '';
+    const statusEl = document.getElementById('import-step1-status');
+    if (statusEl) statusEl.textContent = '';
     
     // Reset display states for all steps
     document.getElementById('import-step-1').style.display = 'block';
@@ -1508,9 +1508,7 @@ function initGoogleImportListeners() {
   });
 
   // ── 2. Data Fetching & Preview (Step 1 -> Step 2) ────────────────────
-  // Calls the backend to fetch the sheet data, maps it, and renders a preview table
-  document.getElementById('btn-load-preview')?.addEventListener('click', async () => {
-    const sheetId = document.getElementById('input-sheet-id').value.trim();
+  async function _studentsLoadImportPreview(sheetId) {
     if (!sheetId) return;
 
     const statusEl = document.getElementById('import-step1-status');
@@ -1560,7 +1558,87 @@ function initGoogleImportListeners() {
     } catch (err) {
       statusEl.textContent = `Error: ${err.message}`;
     }
-  });
+  }
+
+  // ── Custom Google Drive Picker (Bypasses Electron Origin Restrictions) ──
+  async function _studentsOpenDrivePicker() {
+    const btn = document.getElementById('drivePickerBtn');
+    if (!btn) return;
+    btn.classList.add('loading');
+    btn.disabled = true;
+
+    const statusEl = document.getElementById('import-step1-status');
+    const container = document.getElementById('custom-picker-container');
+    const listEl = document.getElementById('custom-picker-list');
+
+    try {
+      if (statusEl) statusEl.textContent = 'Connecting to Google Drive...';
+      
+      // 1. Fetch files directly from backend (bypasses all iframe/CORS issues)
+      const files = await window.api.googleGetDriveFiles();
+      
+      if (!files || files.length === 0) {
+        if (statusEl) statusEl.textContent = 'No spreadsheets found in your Google Drive.';
+        _studentsResetPickerBtn();
+        return;
+      }
+
+      // 2. Render files in custom list
+      listEl.innerHTML = '';
+      files.forEach(file => {
+        const item = document.createElement('div');
+        item.className = 'drive-file-item';
+        // Date formatting
+        const d = new Date(file.modifiedTime);
+        const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        
+        item.innerHTML = `
+          <div style="display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.2s;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="#10B981"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/><rect x="8" y="12" width="8" height="2" fill="#fff"/><rect x="8" y="15" width="8" height="2" fill="#fff"/></svg>
+            <div style="flex:1;">
+              <div style="font-weight:600; color:var(--text-dark); font-size:14px;">${esc(file.name)}</div>
+              <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">Modified: ${dateStr}</div>
+            </div>
+            <button class="btn btn-sm btn-outline" style="pointer-events:none;">Select</button>
+          </div>
+        `;
+        
+        // Hover effect inline for ease
+        const row = item.firstElementChild;
+        row.onmouseenter = () => row.style.background = '#f8fafc';
+        row.onmouseleave = () => row.style.background = 'transparent';
+        
+        // Click handler to select this file
+        row.onclick = () => {
+          container.style.display = 'none';
+          _studentsResetPickerBtn();
+          _studentsLoadImportPreview(file.id);
+        };
+        
+        listEl.appendChild(item);
+      });
+
+      // Show container
+      container.style.display = 'block';
+      if (statusEl) statusEl.textContent = '';
+      btn.style.display = 'none'; // Hide the open button once loaded
+
+    } catch (err) {
+      console.error('Drive fetch failed', err);
+      if (statusEl) statusEl.textContent = `Error: ${err.message}`;
+      _studentsResetPickerBtn();
+    }
+  }
+
+  function _studentsResetPickerBtn() {
+    const btn = document.getElementById('drivePickerBtn');
+    if (!btn) return;
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    btn.style.display = 'inline-flex';
+  }
+
+  document.getElementById('drivePickerBtn')?.addEventListener('click', _studentsOpenDrivePicker);
 
   // ── 3. Checkbox Selection Logic (Step 2) ──────────────────────────────
   // Handle mass selection/deselection to skip problematic students

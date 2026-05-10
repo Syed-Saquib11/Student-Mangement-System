@@ -21,6 +21,30 @@
   color: #fff;
 }
 
+#drivePickerBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 220px;
+  justify-content: center;
+}
+
+#drivePickerBtn.loading .picker-btn-label::after {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-left: 8px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: _pickerSpin 0.7s linear infinite;
+}
+
+@keyframes _pickerSpin {
+  to { transform: rotate(360deg); }
+}
+
 .student-thumb {
   width: 2.25rem;
   height: 2.25rem;

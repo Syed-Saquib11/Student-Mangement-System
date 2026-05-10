@@ -740,6 +740,24 @@ ipcMain.handle('backup:restore', async () => {
 
 // ── IPC Handlers: Google Drive ────────────────────
 
+ipcMain.handle('google:getToken', async () => {
+  const token = await googleService.getValidAccessToken();
+  return token;
+});
+
+ipcMain.handle('google:getDriveFiles', async () => {
+  return await googleService.getDriveFiles();
+});
+
+ipcMain.handle('google:getConfig', () => {
+  const clientId = process.env.GOOGLE_CLIENT_ID || '';
+  const appId = clientId.split('-')[0] || '';
+  return {
+    apiKey: process.env.GOOGLE_API_KEY ?? '',
+    appId: appId
+  };
+});
+
 ipcMain.handle('google:getStatus', async () => {
   try {
     return await googleService.getStatus();
