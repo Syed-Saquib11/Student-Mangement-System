@@ -547,71 +547,14 @@ function renderGradesTable() {
   const tbody = document.getElementById('grades-tbody');
   if (!tbody) return;
 
-  // Read filter values
+  // Frontend receives the fully sorted, fully calculated array from the service.
+  // It must render exactly what it receives with zero modification of sort order.
+  let enriched = gradesData;
+
+  // Read search & course filter (we still allow basic searching)
   const searchQuery = document.getElementById('grade-search')?.value.toLowerCase().trim() || '';
   const courseFilter = document.getElementById('grade-course-filter')?.value || 'all';
-  const statusFilter = document.getElementById('grade-status-filter')?.value || 'all';
-  const examFilter = document.getElementById('grade-exam-filter')?.value || 'all';
-  const sortBy = document.getElementById('grade-sort')?.value || 'name-asc';
 
-  // Enrich each student with computed fields
-  let enriched = gradesData.map((g, idx) => {
-    const numTests = g.tests ? g.tests.length : 0;
-    let maxTotalScore = 0;
-    let actualTotalScore = 0;
-    
-    if (numTests > 0) {
-      g.tests.forEach(t => {
-         const testMeta = testsData.find(td => td.id === t.testId);
-         let maxMarks = 0;
-         if (testMeta && testMeta.questions) {
-            maxMarks = testMeta.questions.reduce((sum, q) => sum + (parseInt(q.marks) || 0), 0);
-         }
-         if (maxMarks === 0) maxMarks = 100;
-
-         maxTotalScore += maxMarks;
-         actualTotalScore += (t.score || 0);
-      });
-    }
-    const avgScore = maxTotalScore > 0 ? Math.round((actualTotalScore / maxTotalScore) * 100) : 0;
-
-    // Test 1 and Test 2 columns
-    const test1 = g.tests && g.tests[0] ? g.tests[0].score : '—';
-    const test2 = g.tests && g.tests[1] ? g.tests[1].score : '—';
-
-    // New Status Logic
-    // Excellent (green) >= 85
-    // Good (yellow/orange) 50-84
-    // Fail (red) < 50
-    let status = 'Fail';
-    let statusClass = 'status-fail';
-
-    if (numTests > 0) {
-      if (avgScore >= 85) {
-        status = 'Excellent';
-        statusClass = 'status-excellent';
-      } else if (avgScore >= 50) {
-        status = 'Good';
-        statusClass = 'status-pass'; // Using status-pass color for "Good"
-      } else {
-        status = 'Fail';
-        statusClass = 'status-fail';
-      }
-    }
-
-    return {
-      ...g,
-      numTests,
-      avgScore,
-      status,
-      statusClass,
-      test1,
-      test2,
-      avatar: getTestAvatarSVG(g.firstName, g.lastName, idx)
-    };
-  });
-
-  // Filter: search
   if (searchQuery) {
     enriched = enriched.filter(g =>
       (g.firstName + ' ' + g.lastName).toLowerCase().includes(searchQuery) ||
@@ -622,32 +565,9 @@ function renderGradesTable() {
     );
   }
 
-  // Filter: course
   if (courseFilter !== 'all') {
     enriched = enriched.filter(g => (g.courseName || '') === courseFilter);
   }
-
-  // Filter: status
-  if (statusFilter !== 'all') {
-    enriched = enriched.filter(g => g.status.toLowerCase() === statusFilter);
-  }
-
-  // Filter: exam taken only
-  if (examFilter === 'taken') {
-    enriched = enriched.filter(g => g.numTests > 0);
-  }
-
-  // Sort
-  enriched.sort((a, b) => {
-    switch (sortBy) {
-      case 'name-desc': return (b.firstName + b.lastName).localeCompare(a.firstName + a.lastName);
-      case 'score-desc': return b.avgScore - a.avgScore;
-      case 'score-asc': return a.avgScore - b.avgScore;
-      case 'tests-desc': return b.numTests - a.numTests;
-      case 'name-asc':
-      default: return (a.firstName + a.lastName).localeCompare(b.firstName + b.lastName);
-    }
-  });
 
   // Pagination Logic
   const totalStudents = enriched.length;
@@ -657,26 +577,50 @@ function renderGradesTable() {
   const startIndex = (currentGradesPage - 1) * GRADES_PAGE_SIZE;
   const pageData = enriched.slice(startIndex, startIndex + GRADES_PAGE_SIZE);
 
-  tbody.innerHTML = pageData.map(g => {
-    const studentName = esc(g.firstName + ' ' + g.lastName);
+  function renderTestCell(testData) {
+    if (testData === null) {
+      return `<td class="not-given">Not Given</td>`;
+    }
+    return `
+      <td class="test-result" style="font-weight: 500; color: var(--text-primary);">
+        ${testData.score}/${testData.totalMarks}
+        <span class="pct">(${testData.percentage.toFixed(1)}%)</span>
+      </td>
+    `;
+  }
+
+  function renderAverageCell(avgPercentage) {
+    if (avgPercentage === null) {
+      return `<td class="not-given">Not Given</td>`;
+    }
+    return `<td class="average" style="font-weight: 700; color: var(--accent);">${avgPercentage.toFixed(1)}%</td>`;
+  }
+
+  tbody.innerHTML = pageData.map((g, idx) => {
+    const studentName = esc(g.studentName);
+    const avatar = getTestAvatarSVG(g.firstName, g.lastName, idx);
 
     return `
       <tr>
         <td style="padding-left: 16px;">
           <div style="display: flex; align-items: center; gap: 14px; padding: 6px 0;">
-            ${g.avatar}
+            ${avatar}
             <div style="display: flex; flex-direction: column; justify-content: center; gap: 2px;">
               <strong style="color: var(--text-primary); font-size: 14px; font-weight: 600; font-family: var(--font-display);">${studentName}</strong>
               <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">${esc(g.studentId)}</span>
             </div>
           </div>
         </td>
-        <td style="font-weight: 500;">${esc(g.rollNumber || '—')}</td>
-        <td><span class="test-course-pill">${esc(g.courseCode || '—')}</span></td>
-        <td style="font-weight: 500; color: var(--text-primary);">${g.test1}</td>
-        <td style="font-weight: 500; color: var(--text-primary);">${g.test2}</td>
-        <td style="font-weight: 700; color: var(--accent);">${g.avgScore}%</td>
-        <td><span class="status-pill ${g.statusClass}">${g.status}</span></td>
+        <td style="font-weight: 500;">${esc(g.rollNumber || '-')}</td>
+        <td><span class="test-course-pill">${esc(g.courseCode || '-')}</span></td>
+        ${renderTestCell(g.test1)}
+        ${renderTestCell(g.test2)}
+        ${renderAverageCell(g.avgPercentage)}
+        <td>
+          <span class="status-pill" style="color: ${g.statusColor}; border: 1px solid ${g.statusColor}; font-weight: 600;">
+            ${g.statusLabel}
+          </span>
+        </td>
       </tr>
     `;
   }).join('');
@@ -949,10 +893,6 @@ async function openTestModal() {
         <label>Question</label>
         <textarea class="form-input pd-q-text" style="background:#fff;" placeholder=""></textarea>
       </div>
-      <div class="question-field" style="margin-bottom:8px;">
-        <label>Image URL (Optional)</label>
-        <input class="form-input pd-q-image" style="background:#fff;" type="text" placeholder="https://example.com/image.png" />
-      </div>
       <div class="question-marks-row">
         <label>Marks:</label>
         <input class="form-input pd-q-marks" style="background:#fff;" type="number" value="${defaultMarks}" />
@@ -975,9 +915,14 @@ async function openTestModal() {
     listEl.scrollTop = listEl.scrollHeight;
   };
 
+  let lastAddModalQ = 0;
   // Event Delegation for action add Q
   document.querySelectorAll('.action-add-q').forEach(btn => {
     btn.addEventListener('click', (e) => {
+      const now = Date.now();
+      if (now - lastAddModalQ < 300) return; // Debounce 300ms
+      lastAddModalQ = now;
+
       const type = e.target.dataset.type;
       if (type === 'mcq') addQuestion('mcq', 10);
       if (type === 'short') addQuestion('short', 10);
@@ -1004,7 +949,6 @@ async function openTestModal() {
       const typeStr = el.dataset.type;
       const textStr = el.querySelector('.pd-q-text').value;
       const marksStr = el.querySelector('.pd-q-marks').value;
-      const imageUrlStr = el.querySelector('.pd-q-image')?.value?.trim() || '';
       const marks = parseInt(marksStr) || 0;
 
       let options = [];
@@ -1020,7 +964,6 @@ async function openTestModal() {
       finalQuestions.push({
         type: typeStr,
         text: textStr,
-        imageUrl: imageUrlStr,
         marks: marks,
         options: options
       });
@@ -1108,9 +1051,6 @@ function renderEditorQuestions() {
             <button class="btn-remove-q action-remove-q">✕</button>
           </div>
         </div>
-        <div class="editor-q-image-wrap" style="margin-bottom:8px;">
-          <input type="text" class="editor-q-image-input form-input" style="font-size: 13px;" value="${esc(q.imageUrl || '')}" placeholder="Image URL (Optional)..." />
-        </div>
         <textarea class="editor-q-text" placeholder="Enter question text...">${esc(q.text)}</textarea>
         ${optionsHtml}
         ${q.type === 'short' ? `<div class="short-ans-box">Student short answer space</div>` : ''}
@@ -1121,7 +1061,12 @@ function renderEditorQuestions() {
   updateEditorTotals();
 }
 
+let lastAddEditorQ = 0;
 window.addEditorQuestion = function (type) {
+  const now = Date.now();
+  if (now - lastAddEditorQ < 300) return; // Debounce 300ms
+  lastAddEditorQ = now;
+
   if (!editorWorkingTest) return;
   const newQ = {
     type: type,
@@ -1195,7 +1140,6 @@ window.saveTestEditor = async function () {
     const typeStr = el.dataset.type;
     const textStr = el.querySelector('.editor-q-text').value;
     const marksStr = el.querySelector('.q-marks-input').value;
-    const imageStr = el.querySelector('.editor-q-image-input')?.value?.trim() || '';
 
     let options = [];
     if (typeStr === 'mcq') {
@@ -1211,7 +1155,6 @@ window.saveTestEditor = async function () {
       type: typeStr,
       text: textStr,
       marks: parseInt(marksStr) || 0,
-      imageUrl: imageStr,
       options: options
     });
   });
@@ -1397,8 +1340,23 @@ async function loadFormPreview() {
 
   statusEl.innerHTML = '<span style="color:var(--accent)">Loading form responses...</span>';
   try {
+    const testNumber = document.getElementById('select-test-number').value;
     const data = await window.api.importPreviewForm(formId);
-    currentFormPreviewData = { ...data, targetTestId: parseInt(testId, 10) };
+
+    // Calculate max marks for snapshot
+    const testMeta = testsData.find(t => t.id === parseInt(testId, 10));
+    let maxMarks = 100;
+    if (testMeta && testMeta.questions) {
+      maxMarks = testMeta.questions.reduce((sum, q) => sum + (parseInt(q.marks) || 0), 0);
+    }
+    if (maxMarks === 0) maxMarks = 100;
+
+    currentFormPreviewData = { 
+      ...data, 
+      targetTestId: parseInt(testId, 10),
+      targetTestNumber: parseInt(testNumber, 10),
+      totalMarksSnapshot: maxMarks
+    };
 
     // Switch to step 2
     document.getElementById('form-import-step-1').classList.add('hidden');
@@ -1466,11 +1424,18 @@ function mapFormStudents() {
       : `<span style="color:var(--danger)">Unmatched</span>`;
 
     if (matchedStudent) {
+      const percentage = currentFormPreviewData.totalMarksSnapshot > 0 
+        ? Math.round((totalScore / currentFormPreviewData.totalMarksSnapshot) * 100) 
+        : 0;
+        
       currentFormPreviewData.mappedResults.push({
-        testId: currentFormPreviewData.targetTestId,
-        studentId: matchedStudent.id,
+        student_id: matchedStudent.id,
+        test_number: currentFormPreviewData.targetTestNumber,
         score: totalScore,
-        answers: resp.answers || {}
+        total_marks_snapshot: currentFormPreviewData.totalMarksSnapshot,
+        percentage_snapshot: percentage,
+        submitted_at: resp.lastSubmittedTime || new Date().toISOString(),
+        last_update: new Date().toISOString()
       });
     }
 

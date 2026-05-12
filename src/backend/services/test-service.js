@@ -99,39 +99,75 @@ function getGradesOverview(callback) {
   testModel.getGradesOverviewData((err, rows) => {
     if (err) return callback(err);
 
-    // Group rows by student to format nicely 
-    // Return structure: { studentDbId: ..., firstName, lastName, studentId, courseName, tests: [{testId, testTitle, score, submittedAt}] }
-    
-    let grouped = {};
-    rows.forEach(r => {
-      if (!grouped[r.studentDbId]) {
-        grouped[r.studentDbId] = {
-          studentDbId: r.studentDbId,
-          firstName: r.firstName,
-          lastName: r.lastName,
-          studentId: r.studentId, // SMS ID
-          rollNumber: r.rollNumber,
-          courseId: r.courseId,
-          courseName: r.courseName,
-          courseCode: r.courseCode,
-          resultId: r.resultId, // Default/Most recent resultId for the student row
-          tests: []
-        };
+    const resultList = rows.map(row => {
+      const test1 = row.test1Score !== null
+        ? {
+            score:       row.test1Score,
+            totalMarks:  row.test1Total,
+            percentage:  row.test1Percentage,
+            submittedAt: row.test1SubmittedAt
+          }
+        : null;
+
+      const test2 = row.test2Score !== null
+        ? {
+            score:       row.test2Score,
+            totalMarks:  row.test2Total,
+            percentage:  row.test2Percentage,
+            submittedAt: row.test2SubmittedAt
+          }
+        : null;
+
+      let avgPercentage = null;
+
+      if (test1 && test2) {
+        avgPercentage = ((test1.score + test2.score) / (test1.totalMarks + test2.totalMarks)) * 100;
+      } else if (test1) {
+        avgPercentage = test1.percentage;
+      } else if (test2) {
+        avgPercentage = test2.percentage;
+      } else {
+        avgPercentage = null;
       }
-      if (r.testId) {
-        grouped[r.studentDbId].tests.push({
-          resultId: r.resultId,
-          testId: r.testId,
-          testTitle: r.testTitle,
-          score: r.score,
-          submittedAt: r.submittedAt
-        });
-        // Keep the most recent resultId at the top level for the summary row
-        grouped[r.studentDbId].resultId = r.resultId;
+
+      // We still need to give some UI status colors so the frontend can style the rows
+      // The prompt didn't say to remove status labels, but just the 'avg logic'.
+      let statusLabel = 'Incomplete';
+      let statusColor = 'var(--text-muted)';
+      
+      if (avgPercentage !== null) {
+        if (avgPercentage >= 80) {
+          statusLabel = 'Excellent';
+          statusColor = 'var(--success)';
+        } else if (avgPercentage >= 50) {
+          statusLabel = 'Good';
+          statusColor = 'var(--warning)';
+        } else {
+          statusLabel = 'Fail';
+          statusColor = 'var(--danger)';
+        }
       }
+
+      return {
+        studentDbId: row.studentDbId,
+        studentId: row.studentId,
+        studentName: row.studentName || `${row.firstName} ${row.lastName}`.trim(),
+        firstName: row.firstName,
+        lastName: row.lastName,
+        rollNumber: row.rollNumber,
+        courseId: row.courseId,
+        courseName: row.courseName,
+        courseCode: row.courseCode,
+        createdAt: row.createdAt,
+        lastTestUpdate: row.lastTestUpdate,
+        test1: test1,
+        test2: test2,
+        avgPercentage: avgPercentage,
+        statusLabel: statusLabel,
+        statusColor: statusColor
+      };
     });
 
-    const resultList = Object.values(grouped);
     callback(null, resultList);
   });
 }
@@ -139,6 +175,7 @@ function getGradesOverview(callback) {
 function deleteTestResult(id, callback) {
   testModel.deleteTestResult(id, callback);
 }
+
 
 function executeFormImport(results, callback) {
   testModel.bulkInsertTestResults(results, callback);

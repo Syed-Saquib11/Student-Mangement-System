@@ -1400,4 +1400,70 @@ body {
   .hide-mobile {
     display: none !important;
   }
-}
+}
+.not-given {
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.8125rem;
+  letter-spacing: 0.01rem;
+}
+
+.test-result {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.pct {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-left: 0.25rem;
+}
+
+/* Pill designs for Grade Overview */
+.not-given-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.375rem;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.8125rem;
+  letter-spacing: 0.01rem;
+  white-space: nowrap;
+}
+
+.test-result-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.375rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.average-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.375rem;
+  background: rgba(14, 165, 160, 0.05);
+  border: 1px solid rgba(14, 165, 160, 0.3);
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.not-given {
+  color: var(--text-muted) !important;
+  font-style: normal !important;
+  font-weight: 600 !important;
+  font-size: 0.8125rem !important;
+  letter-spacing: 0.01rem !important;
+}

@@ -13,29 +13,30 @@ function initTestsTable() {
         duration INTEGER,
         color TEXT DEFAULT 'blue',
         status TEXT DEFAULT 'DRAFT',
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        googleFormId TEXT
       )
     `);
+
+    // Redesign: Drop old and create new
+    db.run(`DROP TABLE IF EXISTS test_results`);
 
     db.run(`
       CREATE TABLE IF NOT EXISTS test_results (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        testId INTEGER,
-        studentId INTEGER,
+        student_id INTEGER,
+        test_number INTEGER,
         score INTEGER,
-        answers TEXT,
-        submittedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(testId) REFERENCES tests(id) ON DELETE CASCADE
+        total_marks_snapshot INTEGER,
+        percentage_snapshot REAL,
+        submitted_at DATETIME,
+        last_update DATETIME,
+        FOREIGN KEY(student_id) REFERENCES students(id) ON DELETE CASCADE
       )
     `);
 
-    // Add googleFormId column if it doesn't exist (safe to run multiple times)
-    db.run(`ALTER TABLE tests ADD COLUMN googleFormId TEXT`, (err) => {
-      // Ignore "duplicate column" error — just means column already exists
-      if (err && !err.message.includes('duplicate column')) {
-        console.error('Error adding googleFormId column:', err.message);
-      }
-    });
+    db.run(`CREATE INDEX IF NOT EXISTS idx_students_created_at ON students(createdAt DESC)`);
+    db.run(`CREATE INDEX IF NOT EXISTS idx_test_results_last_update ON test_results(last_update DESC)`);
   });
 }
 
@@ -103,13 +104,23 @@ function bulkInsertTestResults(results, callback) {
     db.run('BEGIN TRANSACTION');
 
     const stmt = db.prepare(`
-      INSERT INTO test_results (testId, studentId, score, answers)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO test_results (
+        student_id, test_number, score, total_marks_snapshot, 
+        percentage_snapshot, submitted_at, last_update
+      )
+      SELECT ?, ?, ?, ?, ?, ?, ?
+      WHERE NOT EXISTS (
+        SELECT 1 FROM test_results WHERE student_id = ? AND test_number = ?
+      )
     `);
 
     results.forEach(res => {
-      stmt.run([res.testId, res.studentId, res.score, JSON.stringify(res.answers || {})], (err) => {
-        if (!err) inserted++;
+      stmt.run([
+        res.student_id, res.test_number, res.score, res.total_marks_snapshot,
+        res.percentage_snapshot, res.submitted_at, res.last_update,
+        res.student_id, res.test_number
+      ], function(err) {
+        if (!err && this.changes > 0) inserted++;
       });
     });
 
@@ -127,18 +138,49 @@ function bulkInsertTestResults(results, callback) {
 
 function getGradesOverviewData(callback) {
   const sql = `
-    SELECT 
-      s.id as studentDbId, s.firstName, s.lastName, s.studentId, s.rollNumber, s.courseId,
-      c.name as courseName, 
-      COALESCE(NULLIF(c.code, ''), c.name, '—') as courseCode,
-      tr.id as resultId, tr.score, tr.submittedAt,
-      t.id as testId, t.title as testTitle
+    SELECT
+      s.id            AS studentDbId,
+      (s.firstName || ' ' || s.lastName) AS studentName,
+      s.firstName     AS firstName,
+      s.lastName      AS lastName,
+      s.studentId     AS studentId,
+      s.rollNumber    AS rollNumber,
+      s.courseId      AS courseId,
+      c.name          AS courseName,
+      COALESCE(NULLIF(c.code, ''), c.name, '—') AS courseCode,
+      s.createdAt     AS createdAt,
+      MAX(tr.last_update) AS lastTestUpdate,
+
+      -- Test 1 snapshot values
+      MAX(CASE WHEN tr.test_number = 1 THEN tr.score END)
+        AS test1Score,
+      MAX(CASE WHEN tr.test_number = 1 THEN tr.total_marks_snapshot END)
+        AS test1Total,
+      MAX(CASE WHEN tr.test_number = 1 THEN tr.percentage_snapshot END)
+        AS test1Percentage,
+      MAX(CASE WHEN tr.test_number = 1 THEN tr.submitted_at END)
+        AS test1SubmittedAt,
+
+      -- Test 2 snapshot values
+      MAX(CASE WHEN tr.test_number = 2 THEN tr.score END)
+        AS test2Score,
+      MAX(CASE WHEN tr.test_number = 2 THEN tr.total_marks_snapshot END)
+        AS test2Total,
+      MAX(CASE WHEN tr.test_number = 2 THEN tr.percentage_snapshot END)
+        AS test2Percentage,
+      MAX(CASE WHEN tr.test_number = 2 THEN tr.submitted_at END)
+        AS test2SubmittedAt
+
     FROM students s
-    LEFT JOIN test_results tr ON s.id = tr.studentId
-    LEFT JOIN tests t ON tr.testId = t.id
+    LEFT JOIN test_results tr ON tr.student_id = s.id
     LEFT JOIN courses c ON s.courseId = c.id
     WHERE s.status = 'Active' AND s.courseId IS NOT NULL
-    ORDER BY s.firstName, s.lastName, t.createdAt ASC
+
+    GROUP BY s.id
+
+    ORDER BY
+      MAX(tr.last_update) DESC NULLS LAST,  -- tested students first, most recent on top
+      s.createdAt DESC                      -- untested students ordered by newest created
   `;
   db.all(sql, [], callback);
 }
