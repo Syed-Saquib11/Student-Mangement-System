@@ -199,7 +199,7 @@ function getAllFeesWithPayments(callback) {
   const sql = `
     SELECT 
       f.*,
-      s.firstName, s.lastName, s.class, s.phone, s.studentId as s_studentId, s.courseId, s.admissionDate, 
+      s.firstName, s.lastName, s.class, s.rollNumber, s.phone, s.studentId as s_studentId, s.courseId, s.admissionDate, 
       s.status as studentStatus, s.createdAt as studentCreatedAt
     FROM fees f
     JOIN students s ON f.studentId = s.id

@@ -169,6 +169,7 @@ window.initFees = function () {
             sid: f.s_studentId || `STU-${f.studentId}`,
             course: c ? (c.code || String(c.id)) : (f.courseId ? String(f.courseId) : 'Unassigned'),
             grade: f.class || '',
+            rollNumber: f.rollNumber || '',
             phone: f.phone || '',
             total: f.totalAmount || 0,
             admissionDate: f.admissionDate || (f.createdAt ? f.createdAt.slice(0, 10) : td()),
@@ -494,7 +495,7 @@ window.initFees = function () {
       `;
 
       return `<tr class="${isWarningRow ? 'rov' : ''} ant-f" id="r-${f.id}" style="animation-delay:${delay}s; ${isInactive ? 'filter:grayscale(100%) opacity(0.6); pointer-events:none;' : ''}">
-        <td><div class="stc"><div class="av" style="background:${av}">${ini(f.name)}</div><div><div class="stn">${f.name}</div><div class="stg">${f.grade || ''}</div></div></div></td>
+        <td><div class="stc"><div class="av" style="background:${av}">${ini(f.name)}</div><div><div class="stn">${f.name}</div>${f.rollNumber ? `<div class="stg">${f.rollNumber}</div>` : ''}</div></div></td>
         <td><span class="course-badge">${f.course}</span></td>
         <td><span class="famt">${fmt(f.total)}</span></td>
         <td class="paid-cell"><div class="pc"><span class="pv">${fmt(lifetimePaid)}</span><span class="pp ${bc}">${pc === 100 ? '100% Cleared' : pc + '% Paid'}</span><div class="pb"><div class="pf ${bc}" style="width:${pc}%"></div></div></div></td>

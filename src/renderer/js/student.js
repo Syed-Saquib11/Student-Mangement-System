@@ -101,6 +101,53 @@ function _studentKeyHandler(e) {
 // New single-shell entrypoint (router.js expects this).
 window.initStudents = window.initStudentPage;
 
+// Custom student comparator helper
+function _compareStudents(a, b) {
+  const getBucket = (s) => {
+    const isInactive = String(s.status || '').trim().toLowerCase() === 'inactive';
+    if (isInactive) return 3;
+    const roll = (s.rollNumber === null || s.rollNumber === undefined) ? '' : String(s.rollNumber).trim();
+    if (roll === '') return 1;
+    return 2;
+  };
+
+  const bucketA = getBucket(a);
+  const bucketB = getBucket(b);
+
+  if (bucketA !== bucketB) {
+    return bucketA - bucketB;
+  }
+
+  const rA = (a.rollNumber === null || a.rollNumber === undefined) ? '' : String(a.rollNumber).trim();
+  const rB = (b.rollNumber === null || b.rollNumber === undefined) ? '' : String(b.rollNumber).trim();
+
+  if (rA === '' && rB === '') {
+    return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+  }
+  if (rA === '') return -1;
+  if (rB === '') return 1;
+
+  const isNumA = /^\d+$/.test(rA);
+  const isNumB = /^\d+$/.test(rB);
+
+  if (isNumA && isNumB) {
+    const valA = parseInt(rA, 10);
+    const valB = parseInt(rB, 10);
+    if (valA !== valB) {
+      return valA - valB;
+    }
+  } else if (isNumA) {
+    return -1;
+  } else if (isNumB) {
+    return 1;
+  } else {
+    const comp = rA.localeCompare(rB, undefined, { numeric: true, sensitivity: 'base' });
+    if (comp !== 0) return comp;
+  }
+
+  return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+}
+
 // ── Load & Render Students ────────────────────────────
 async function loadStudents() {
   try {
@@ -130,13 +177,8 @@ async function loadStudents() {
     globalSlotData = slotDataObj;
     allStudents = students || [];
     
-    // Sort: Inactive at bottom, then Recent at top
-    allStudents.sort((a, b) => {
-      const aInact = (String(a.status || '').trim().toLowerCase() === 'inactive') ? 1 : 0;
-      const bInact = (String(b.status || '').trim().toLowerCase() === 'inactive') ? 1 : 0;
-      if (aInact !== bInact) return aInact - bInact;
-      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-    });
+    // Sort: custom 3-bucket order
+    allStudents.sort(_compareStudents);
 
     courseMap = new Map((courses || []).map(c => [String(c.id), c]));
     slotMap   = new Map(uniqueSlots.map(s => [String(s.id), s]));
@@ -382,13 +424,8 @@ function bindSearchAndFilter() {
       results = results.filter(s => String(s.courseId ?? '') === String(course));
     }
 
-    // Sort: Inactive at bottom, then Recent at top
-    results.sort((a, b) => {
-      const aInact = (String(a.status || '').trim().toLowerCase() === 'inactive') ? 1 : 0;
-      const bInact = (String(b.status || '').trim().toLowerCase() === 'inactive') ? 1 : 0;
-      if (aInact !== bInact) return aInact - bInact;
-      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-    });
+    // Sort: custom 3-bucket order
+    results.sort(_compareStudents);
 
     currentPage = 1;
     renderTable(results);
@@ -485,11 +522,13 @@ function openStudentModal(student) {
 
   const currentClass = student?.class || '';
   const commonClasses = [
-    'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12',
+    'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12',
     'B.Tech', 'BCA', 'MCA'
   ];
   const classList = Array.from(new Set([...commonClasses, currentClass].filter(Boolean)));
-  const classOptions = classList.map(v => `
+  const classOptions = `
+    <option value="" disabled ${!currentClass ? 'selected' : ''}>Enter your class and grade</option>
+  ` + classList.map(v => `
     <option value="${esc(v)}" ${String(v) === String(currentClass) ? 'selected' : ''}>${esc(v)}</option>
   `).join('');
 
@@ -517,13 +556,13 @@ function openStudentModal(student) {
           <div class="form-grid edit-form-grid">
             <div class="form-group form-full">
               <label class="form-label edit-form-label">FULL NAME <span class="required-star">*</span></label>
-              <input class="form-input edit-form-input" id="inp-fullName" type="text" placeholder="Amit Kumar" value="${esc(fullNameValue)}" />
+              <input class="form-input edit-form-input" id="inp-fullName" type="text" placeholder="Enter your name" value="${esc(fullNameValue)}" />
             </div>
 
 
             <div class="form-group" style="position:relative;">
               <label class="form-label edit-form-label">ROLL NUMBER</label>
-              <input class="form-input edit-form-input" id="inp-roll" type="text" placeholder="01" value="${esc(rollValue)}" />
+              <input class="form-input edit-form-input" id="inp-roll" type="text" placeholder="Enter roll number" value="${esc(rollValue)}" />
               <div id="roll-error" style="color: #ef4444; font-size: 11px; margin-top: 4px; display: none;"></div>
             </div>
 
@@ -570,12 +609,12 @@ function openStudentModal(student) {
             </div>
             <div class="form-group">
               <label class="form-label edit-form-label">MOBILE</label>
-              <input class="form-input edit-form-input" id="inp-phone" type="tel" placeholder="9876543210" value="${esc(student?.phone || '')}" />
+              <input class="form-input edit-form-input" id="inp-phone" type="tel" placeholder="Enter mobile number" value="${esc(student?.phone || '')}" />
             </div>
 
             <div class="form-group">
               <label class="form-label edit-form-label">MONTHLY FEE (₹)</label>
-              <input class="form-input edit-form-input" id="inp-feeAmount" type="number" placeholder="15000" value="${esc(student?.feeAmount || '')}" />
+              <input class="form-input edit-form-input" id="inp-feeAmount" type="number" placeholder="Enter monthly fee" value="${esc(student?.feeAmount || '')}" />
             </div>
             <div class="form-group">
               <label class="form-label edit-form-label" style="opacity: 0.6;">FEE STATUS (Read-only)</label>
@@ -627,6 +666,7 @@ function openStudentModal(student) {
             <div class="form-group">
               <label class="form-label edit-form-label">CATEGORY</label>
               <select class="form-select edit-form-select" id="inp-category">
+                <option value="" disabled ${!student?.category ? 'selected' : ''}>Enter your category</option>
                 <option value="General" ${student?.category === 'General' ? 'selected' : ''}>General</option>
                 <option value="OBC" ${student?.category === 'OBC' ? 'selected' : ''}>OBC</option>
                 <option value="SC" ${student?.category === 'SC' ? 'selected' : ''}>SC</option>

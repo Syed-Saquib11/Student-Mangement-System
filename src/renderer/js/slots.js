@@ -909,6 +909,7 @@ function _confirmExport() {
   );
 }
 
+// FIXED: Dynamic capacity grid — DO NOT hardcode seat count
 async function _exportSchedule() {
   try {
     const { jsPDF } = window.jspdf;
@@ -957,11 +958,16 @@ async function _exportSchedule() {
 
       daySlots.forEach(slot => {
         const enrolledIds = _slotData[day].students[slot.id] || [];
+        const maxCapacity = _slotCap(slot);
         
+        let sessionLabel = slot.session === 'morning' ? 'Morning' : 'Evening';
+        let customLabel = slot.custom ? ' · Custom' : '';
+        let headerText = `${slot.label}   ${sessionLabel}${customLabel}\nCapacity: ${maxCapacity} seats`;
+
         // SLOT SUB-HEADER
         tableBody.push([
           { 
-            content: `⏰ ${slot.label}`, 
+            content: headerText, 
             colSpan: 2, 
             styles: { 
               fillColor: purpleLight, 
@@ -973,26 +979,31 @@ async function _exportSchedule() {
           }
         ]);
 
-        // Get student strings
-        const studentStrings = enrolledIds.map((stuId, idx) => {
-          const s = _masterStudents.find(x => String(x.id) === String(stuId));
-          const name = s ? `${s.firstName || ''} ${s.lastName || ''}`.trim() : `ID: ${stuId}`;
-          const roll = s ? (s.rollNumber || s.studentId || '—') : '—';
-          return `${idx + 1}. ${name} (Roll: ${roll})`;
-        });
-
-        // Add 3 blank rows for manual entry
-        const startBlankCount = studentStrings.length + 1;
-        for (let i = 0; i < 3; i++) {
-          studentStrings.push(`${startBlankCount + i}. [ ____________________ ]`);
+        const seats = [];
+        for (let i = 0; i < maxCapacity; i++) {
+          const stuId = enrolledIds[i];
+          if (stuId) {
+            const s = _masterStudents.find(x => String(x.id) === String(stuId));
+            const name = s ? `${s.firstName || ''} ${s.lastName || ''}`.trim() : `ID: ${stuId}`;
+            const roll = s ? (s.rollNumber || s.studentId || '—') : '—';
+            seats.push(`${i + 1}. ${name} (Roll: ${roll})`);
+          } else {
+            seats.push(`${i + 1}. —`);
+          }
         }
 
         // Chunk into 2-column grid
-        for (let i = 0; i < studentStrings.length; i += 2) {
-          tableBody.push([
-            { content: studentStrings[i] || '', styles: { minCellHeight: 10, halign: 'left' } },
-            { content: studentStrings[i+1] || '', styles: { minCellHeight: 10, halign: 'left' } }
-          ]);
+        for (let i = 0; i < seats.length; i += 2) {
+          if (seats[i+1] !== undefined) {
+            tableBody.push([
+              { content: seats[i], styles: { minCellHeight: 10, halign: 'left' } },
+              { content: seats[i+1], styles: { minCellHeight: 10, halign: 'left' } }
+            ]);
+          } else {
+            tableBody.push([
+              { content: seats[i], colSpan: 2, styles: { minCellHeight: 10, halign: 'left' } }
+            ]);
+          }
         }
         
         // Notes area for this slot
@@ -1030,7 +1041,7 @@ async function _exportSchedule() {
       },
       margin: { left: 14, right: 14, bottom: 20 },
       pageBreak: 'auto',
-      rowPageBreak: 'avoid', // Prevent breaking inside a student row or header
+      rowPageBreak: 'avoid',
       didDrawPage: (data) => {
         doc.setFontSize(8);
         doc.setTextColor(180);
