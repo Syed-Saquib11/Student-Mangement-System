@@ -13,140 +13,93 @@ window.initFees = function () {
   const td = () => new Date().toISOString().slice(0, 10);
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // SECTION 1 — ANCHOR CLAMP
-  // Always offsets from the ORIGINAL admissionDate anchor day.
-  // Never chains setMonth(). Handles short months & leap years correctly.
-  //   Jan 31 + 2m = Mar 31  (snap-back, not Mar 28)
-  //   Jan 31 + 1m = Feb 28  (clamped)
+  // SECTION 1 & 2 & 3 & 4 & 5 — REWRITTEN BILLING LOGIC
   // ─────────────────────────────────────────────────────────────────────────────
-  const addMonthsClamped = (admDateStr, monthsToAdd) => {
+
+  // Date formatter to YYYY-MM-DD local time
+  const fmtLocalDate = d => d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : null;
+
+  /**
+   * Admission month is fully prepaid. Billing starts strictly on the 1st of the next month.
+   */
+  const getBillingStartDate = (admDateStr) => {
     const adm = new Date(admDateStr);
-    const anchorDay = adm.getDate();
-    const targetMonth = adm.getMonth() + monthsToAdd;
-    const targetYear = adm.getFullYear();
-    // Normalize by creating a date on the 1st, then set the day
-    const normalized = new Date(targetYear, targetMonth, 1);
-    const lastDay = new Date(
-      normalized.getFullYear(), normalized.getMonth() + 1, 0
-    ).getDate();
-    normalized.setDate(Math.min(anchorDay, lastDay));
-    return normalized.toISOString().slice(0, 10);
+    if (isNaN(adm.getTime())) return new Date();
+    return new Date(adm.getFullYear(), adm.getMonth() + 1, 1);
   };
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // SECTION 2 — PERIODS ELAPSED
-  // A period is elapsed only when its DUE DATE has passed.
-  // Period N due = admissionDate + N months.
-  // Minimum 0 — a student inside their first window owes nothing yet.
-  // ─────────────────────────────────────────────────────────────────────────────
-  const getPeriodsElapsed = (admDateStr) => {
+  const getPeriodsElapsed = (admDateStr, today = new Date()) => {
     if (!admDateStr) return 0;
-    const adm = new Date(admDateStr);
-    if (isNaN(adm.getTime())) return 0;
-    const now = new Date();
-
-    let months =
-      (now.getFullYear() - adm.getFullYear()) * 12 +
-      (now.getMonth() - adm.getMonth());
-
-    // Clamp anchor to handle short months
-    const anchorDay = adm.getDate();
-    const lastDayOfCurrentMonth = new Date(
-      now.getFullYear(), now.getMonth() + 1, 0
-    ).getDate();
-    const effectiveAnchor = Math.min(anchorDay, lastDayOfCurrentMonth);
-
-    // If today hasn't reached the anchor day this month,
-    // the current period's due date has NOT passed yet
-    if (now.getDate() < effectiveAnchor) months--;
-
-    // Minimum 0 — student may be inside their first window with nothing due yet
-    return Math.max(0, months);
+    const start = getBillingStartDate(admDateStr);
+    if (isNaN(start.getTime())) return 0;
+    if (today < start) return 0;
+    let months = (today.getFullYear() - start.getFullYear()) * 12 + (today.getMonth() - start.getMonth());
+    return Math.max(0, months + 1);
   };
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // SECTION 3 — PERIOD BOUNDARY HELPERS
-  // ─────────────────────────────────────────────────────────────────────────────
-
-  // Start of the window the student is currently inside
-  const getCurrentPeriodStart = (admDateStr) => {
-    const periods = getPeriodsElapsed(admDateStr);
-    return addMonthsClamped(admDateStr, periods);
+  const calculateTotalOwed = (monthlyFee, periodsElapsed) => Number(monthlyFee || 0) * periodsElapsed;
+  const calculateBalance = (totalOwed, totalPaid) => Math.max(0, totalOwed - totalPaid);
+  
+  const calculateMissedPeriods = (balance, monthlyFee) => {
+    const fee = Number(monthlyFee);
+    if (!fee || fee <= 0) {
+      console.warn('Monthly fee is 0 or invalid');
+      return 0;
+    }
+    return Math.floor(balance / fee);
   };
 
-  // Due date of the current or most recently elapsed period
-  // = admissionDate + (periodsElapsed + 1) months
-  const getCurrentPeriodDue = (f) => {
-    const periods = getPeriodsElapsed(f.admissionDate);
-    return addMonthsClamped(f.admissionDate, periods + 1);
+  const getCurrentPeriodDueDate = (admDateStr, today = new Date()) => {
+    const periods = getPeriodsElapsed(admDateStr, today);
+    if (periods === 0) return null;
+    const start = getBillingStartDate(admDateStr);
+    return new Date(start.getFullYear(), start.getMonth() + (periods - 1), 1);
   };
 
-  // For PAID students — when is the next payment due
-  const getNextDue = (f) => {
-    const periods = getPeriodsElapsed(f.admissionDate);
-    return addMonthsClamped(f.admissionDate, periods + 1);
+  const getNextDueDate = (currentPeriodDueDate) => {
+    if (!currentPeriodDueDate) return null;
+    return new Date(currentPeriodDueDate.getFullYear(), currentPeriodDueDate.getMonth() + 1, 1);
   };
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // SECTION 4 — BALANCE HELPERS
-  // ─────────────────────────────────────────────────────────────────────────────
-
-  const allPaid = (f) =>
-    f.payments.reduce((s, p) => s + Number(p.amount || 0), 0);
-
-  // Total owed = monthlyFee × elapsed periods
-  // 0 periods elapsed → nothing is due yet → totalOwed = 0
-  const totalOwed = (f) =>
-    Number(f.total) * getPeriodsElapsed(f.admissionDate);
-
-  // Outstanding balance (never negative)
-  const bal = (f) => Math.max(0, totalOwed(f) - allPaid(f));
-
-  // How many full months are completely missed (integer floors)
-  const missedPeriods = (f) => {
-    const periods = getPeriodsElapsed(f.admissionDate);
-    if (periods === 0) return 0;
-    const totalDue = Number(f.total) * periods;
-    const paid = allPaid(f);
-    const unpaidAmt = Math.max(0, totalDue - paid);
-    return Math.floor(unpaidAmt / Number(f.total));
+  const getNextPaymentDate = (admDateStr, today = new Date()) => {
+    const start = getBillingStartDate(admDateStr);
+    let nextDate;
+    if (today.getDate() === 1) {
+      nextDate = new Date(today.getFullYear(), today.getMonth(), 1);
+    } else {
+      nextDate = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    }
+    return nextDate < start ? start : nextDate;
   };
 
-  // Carry-over = debt from more than 1 missed period
-  // (used to distinguish UNPAID from OVERDUE)
+  // Adapters for the rest of the code:
+  const getCurrentPeriodStart = (admDateStr) => fmtLocalDate(getCurrentPeriodDueDate(admDateStr));
+  const getCurrentPeriodDue = (f) => fmtLocalDate(getCurrentPeriodDueDate(f.admissionDate));
+  const getNextDue = (f) => fmtLocalDate(getNextPaymentDate(f.admissionDate));
+
+  const allPaid = (f) => f.payments.reduce((s, p) => s + Number(p.amount || 0), 0);
+  const totalOwed = (f) => calculateTotalOwed(f.total, getPeriodsElapsed(f.admissionDate));
+  const bal = (f) => calculateBalance(totalOwed(f), allPaid(f));
+  const missedPeriods = (f) => calculateMissedPeriods(bal(f), f.total);
   const carryOver = (f) => {
     const missed = missedPeriods(f);
     if (missed <= 1) return 0;
     return Number(f.total) * (missed - 1);
   };
-
-  // Lifetime percentage: allPaid / totalOwed (accumulated debt)
-  // Never exceeds 100, never goes below 0
   const pct = (f) => {
     const owed = totalOwed(f);
     if (owed <= 0) return 0;
     return Math.min(100, Math.max(0, Math.round(allPaid(f) / owed * 100)));
   };
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // SECTION 5 — STATUS LOGIC (4 states, strict priority)
-  //
-  //   due-soon  → periods === 0 (inside first window, nothing owed yet)
-  //   paid      → balance === 0 AND periods > 0
-  //   overdue   → missed > 1 (more than one month of fees owed)
-  //   unpaid    → missed === 1 (exactly one month unpaid)
-  // ─────────────────────────────────────────────────────────────────────────────
   const gst = (f) => {
     if (Number(f.total) <= 0) return 'paid';
-
     const periods = getPeriodsElapsed(f.admissionDate);
-    const balance = bal(f);
     const missed = missedPeriods(f);
-
-    if (periods === 0) return 'due-soon';
-    if (balance <= 0) return 'paid';
-    if (missed > 1) return 'overdue';
-    return 'unpaid';
+    if (periods === 0) return 'paid';
+    if (missed === 0) return 'paid';
+    if (missed === 1) return 'unpaid';
+    return 'overdue';
   };
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -439,7 +392,7 @@ window.initFees = function () {
       const periodDue = getCurrentPeriodDue(f);
       const missed = missedPeriods(f);
       const today = td();
-      const daysLeft = Math.round((new Date(periodDue) - new Date(today)) / (1000 * 60 * 60 * 24));
+      const daysLeft = periodDue ? Math.round((new Date(periodDue) - new Date(today)) / (1000 * 60 * 60 * 24)) : 0;
 
       const bc = pc >= 100 ? 'full' : pc === 0 ? 'zero' : pc < 30 ? 'low' : '';
       const blc = b > 0 ? (co > 0 ? 'b-ov' : 'b-du') : 'b-cl';
@@ -476,7 +429,7 @@ window.initFees = function () {
           subText = ''; subColor = ''; badgeClass = 'b-unpaid';
       }
 
-      const dateDisplay = `<span class="dd ${isWarningRow ? 'd-ov' : 'd-ok'}">${periodDue}<br><span style="font-size:10px;font-weight:700;${subColor}">${subText}</span></span>`;
+      const dateDisplay = `<span class="dd ${isWarningRow ? 'd-ov' : 'd-ok'}">${periodDue || 'Not yet due'}<br><span style="font-size:10px;font-weight:700;${subColor}">${subText}</span></span>`;
       const statusLabel = st.charAt(0).toUpperCase() + st.slice(1).replace('-', ' ');
 
       // Action buttons depend on status
@@ -547,7 +500,7 @@ window.initFees = function () {
     document.getElementById('fg').value = f.grade;
     document.getElementById('fph').value = f.phone;
     document.getElementById('ftot').value = f.total;
-    document.getElementById('fdu').value = f.due || getCurrentPeriodDue(f);
+    document.getElementById('fdu').value = f.due || getCurrentPeriodDue(f) || '';
     document.getElementById('fno').value = f.notes || '';
     ['fn-fi', 'fc-fi', 'ft-fi', 'fd-fi'].forEach(id => document.getElementById(id).classList.remove('err'));
     document.getElementById('addMd').classList.add('on');
@@ -641,6 +594,7 @@ window.initFees = function () {
     if (isNaN(adm.getTime())) return;
 
     const periodsCount = getPeriodsElapsed(f.admissionDate);
+    const billingStart = getBillingStartDate(f.admissionDate);
 
     // Waterfall FIFO — oldest payments fill earliest periods first
     let pool = [...f.payments]
@@ -652,9 +606,11 @@ window.initFees = function () {
 
     // ── Elapsed periods ──────────────────────────────────────────────────────
     for (let i = 0; i < periodsCount; i++) {
-      // Period boundaries: start = adm + i months, due = adm + (i+1) months
-      const periodStart = addMonthsClamped(f.admissionDate, i);
-      const periodDue = addMonthsClamped(f.admissionDate, i + 1);
+      // Period boundaries: start = billingStart + i months, due = start + 1 month
+      const ds = new Date(billingStart.getFullYear(), billingStart.getMonth() + i, 1);
+      const de = new Date(billingStart.getFullYear(), billingStart.getMonth() + i + 1, 1);
+      const periodStart = fmtLocalDate(ds);
+      const periodDue = fmtLocalDate(de);
 
       let owed = Number(f.total);
       let applied = [];
@@ -672,7 +628,6 @@ window.initFees = function () {
         if (pool[0].remaining <= 0) pool.shift();
       }
 
-      const ds = new Date(periodStart), de = new Date(periodDue);
       const label = `Month ${i + 1} · ${MONTHS[ds.getMonth()]} ${ds.getDate()}, ${ds.getFullYear()} – ${MONTHS[de.getMonth()]} ${de.getDate()}, ${de.getFullYear()}`;
 
       let periodStatus, stClass;
@@ -705,9 +660,10 @@ window.initFees = function () {
     }
 
     // ── Current open window (not yet due) ───────────────────────────────────
-    const currentStart = addMonthsClamped(f.admissionDate, periodsCount);
-    const currentDue = addMonthsClamped(f.admissionDate, periodsCount + 1);
-    const cs = new Date(currentStart), cd = new Date(currentDue);
+    const cs = new Date(billingStart.getFullYear(), billingStart.getMonth() + periodsCount, 1);
+    const cd = new Date(billingStart.getFullYear(), billingStart.getMonth() + periodsCount + 1, 1);
+    const currentStart = fmtLocalDate(cs);
+    const currentDue = fmtLocalDate(cd);
     const currentLabel = periodsCount === 0
       ? `Month 1 — First billing period`
       : `Month ${periodsCount + 1} — Current period`;
@@ -768,7 +724,7 @@ window.initFees = function () {
     const co = carryOver(f);
     const periodDue = getCurrentPeriodDue(f);
     const missed = missedPeriods(f);
-    const daysLeft = Math.round((new Date(periodDue) - new Date()) / (1000 * 60 * 60 * 24));
+    const daysLeft = periodDue ? Math.round((new Date(periodDue) - new Date()) / (1000 * 60 * 60 * 24)) : 0;
 
     document.getElementById('dmt').textContent = f.name;
     document.getElementById('dms').textContent = `${f.course} · ${f.grade}`;
