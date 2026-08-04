@@ -25,6 +25,7 @@ const bridge = {
   getFeePayments: (feeId) => ipcRenderer.invoke('fees:getPayments', feeId),
   updateFee: (studentId, data) => ipcRenderer.invoke('fees:update', studentId, data),
   addPayment: (feeId, data) => ipcRenderer.invoke('fees:addPayment', feeId, data),
+  reducePayment: (paymentId, amount) => ipcRenderer.invoke('fees:reducePayment', paymentId, amount),
   deletePayment: (paymentId) => ipcRenderer.invoke('fees:deletePayment', paymentId),
 
   // ── TESTS ─────────────────────────────────────────────

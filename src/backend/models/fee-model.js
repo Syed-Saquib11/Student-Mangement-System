@@ -186,6 +186,26 @@ function addPayment(feeId, amount, method, paymentDate, note, callback) {
   });
 }
 
+function reducePayment(paymentId, amountToSubtract, callback) {
+  db.get(`SELECT feeId, amount FROM payments WHERE id = ?`, [paymentId], (err, row) => {
+    if (err || !row) return callback(err || new Error("Payment not found"));
+    const newAmount = row.amount - amountToSubtract;
+    if (newAmount <= 0) {
+      db.run(`DELETE FROM payments WHERE id = ?`, [paymentId], function(err) {
+        if (err) return callback(err);
+        triggerFeeUpdate(row.feeId);
+        callback(null, { deleted: true });
+      });
+    } else {
+      db.run(`UPDATE payments SET amount = ? WHERE id = ?`, [newAmount, paymentId], function(err) {
+        if (err) return callback(err);
+        triggerFeeUpdate(row.feeId);
+        callback(null, { updated: true, newAmount });
+      });
+    }
+  });
+}
+
 function deletePayment(paymentId, callback) {
   // First find the feeId
   db.get(`SELECT feeId FROM payments WHERE id = ?`, [paymentId], (err, row) => {
@@ -237,5 +257,6 @@ module.exports = {
   updateFeeRecord,
   addPayment,
   deletePayment,
+  reducePayment,
   getAllFeesWithPayments
 };

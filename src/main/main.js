@@ -493,6 +493,13 @@ ipcMain.handle('fees:addPayment', async (event, feeId, data) => {
     });
   });
 });
+ipcMain.handle('fees:reducePayment', async (event, paymentId, amount) => {
+  return new Promise((resolve, reject) => {
+    feeModel.reducePayment(paymentId, amount, (err, res) => {
+      if (err) reject(err.message); else resolve(res);
+    });
+  });
+});
 ipcMain.handle('fees:deletePayment', async (event, paymentId) => {
   return new Promise((resolve, reject) => {
     feeModel.deletePayment(paymentId, (err, res) => {

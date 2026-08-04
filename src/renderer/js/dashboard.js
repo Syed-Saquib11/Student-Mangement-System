@@ -140,6 +140,18 @@ window.initDashboard = async function initDashboard() {
   bindKeyboardShortcuts();
 };
 
+window.refreshDashboardStats = async function() {
+  if (!_dashboardActive) return;
+  try {
+    const students = await window.api.getAllStudents();
+    const activeStudents = students.filter(s => String(s.status || '').trim().toLowerCase() !== 'inactive');
+    _renderDashStats(activeStudents);
+    _renderFeeDonut(activeStudents);
+  } catch (err) {
+    console.error('Failed to refresh dashboard stats:', err);
+  }
+};
+
 window.destroyDashboard = function destroyDashboard() {
   _dashboardActive = false;
   document.getElementById('dash-cal-prev')?.removeEventListener('click', _calPrev);

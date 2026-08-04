@@ -607,6 +607,7 @@ window.initFees = function () {
         owed -= use;
         pool[0].remaining -= use;
         applied.push({
+          id: pool[0].id,
           date: pool[0].paymentDate,
           amount: use,
           method: pool[0].method,
@@ -625,9 +626,12 @@ window.initFees = function () {
 
       const paymentsHtml = applied.length > 0
         ? applied.map(p =>
-          `<div style="font-size:12px; color:var(--text); margin-top:4px; display:flex; justify-content:space-between; border-bottom:1px dotted var(--border); padding-bottom:3px;">
+          `<div style="font-size:12px; color:var(--text); margin-top:4px; display:flex; justify-content:space-between; border-bottom:1px dotted var(--border); padding-bottom:3px; align-items:center;">
                <span>${p.date} · <strong>${p.method}</strong>${p.note ? ' · ' + p.note : ''}</span>
-               <span style="font-weight:600;">+ ${fmt(p.amount)}</span>
+               <div style="display:flex; align-items:center; gap:8px;">
+                 <span style="font-weight:600;">+ ${fmt(p.amount)}</span>
+                 <button class="prd" style="padding:4px 8px; font-size:12px; font-weight:bold; color:#fff; background:var(--red,#ef4444); border-radius:4px; border:none; cursor:pointer; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3); transition:0.2s;" onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter='none'" onclick="window.feesObj.delPayFromHist('${p.id}', '${f.id}', ${p.amount})" title="Delete Payment">🗑 Delete</button>
+               </div>
              </div>`
         ).join('')
         : `<div style="font-size:12px; color:var(--t3); margin-top:4px;">No payments recorded for this period</div>`;
@@ -789,6 +793,9 @@ window.initFees = function () {
       await window.api.addPayment(f.id, { amount: amt, method: mt, paymentDate: dt, note: nt });
       await load();
       bldDet();
+      if (window.refreshDashboardStats) {
+        window.refreshDashboardStats();
+      }
       toast(`Payment of ${fmt(amt)} recorded for ${f.name}`, 'g');
       const updated = fees.find(x => x.id === detId);
       if (updated && bal(updated) === 0) {
@@ -797,6 +804,32 @@ window.initFees = function () {
     } catch (e) {
       toast('Failed to add payment', 'r');
     }
+  }
+
+  function delPayFromHist(paymentId, feeId, amountToDeduct) {
+    const f = fees.find(x => x.id === feeId);
+    if (!f) return;
+    const payment = f.payments.find(p => p.id === paymentId || p.id === Number(paymentId));
+    if (!payment) return;
+
+    showCf(
+      '⚠️ Remove Payment Allocation?',
+      `Remove <strong>${fmt(amountToDeduct)}</strong> from the payment made on <strong>${payment.paymentDate}</strong>?<br><br>This will mark the affected period as unpaid/partial and update all totals.<br><br><strong>This cannot be undone.</strong>`,
+      async () => {
+        try {
+          await window.api.reducePayment(payment.id, amountToDeduct);
+          await load();
+          histId = feeId;
+          bldHist();
+          if (window.refreshDashboardStats) {
+            window.refreshDashboardStats();
+          }
+          toast('Payment allocation removed', 'b');
+        } catch (err) {
+          throw err;
+        }
+      }
+    );
   }
 
   function delPay(i) {
@@ -831,6 +864,9 @@ window.initFees = function () {
           
           await load();
           bldDet();
+          if (window.refreshDashboardStats) {
+            window.refreshDashboardStats();
+          }
           
           const updated = fees.find(x => x.id === detId);
           toast('Payment deleted', 'b');
@@ -1095,7 +1131,7 @@ window.initFees = function () {
   Object.assign(window.feesObj, {
     setSF, sf, srt, onSrch, clrSrch, clrAll, cfe, goPage,
     openEd, closeAdd, saveRec,
-    openDetPay, closeDet, addPay, delPay, delFromDet, delRec,
+    openDetPay, closeDet, addPay, delPay, delPayFromHist, delFromDet, delRec,
     qRem, openRem, closeRem, updRem, sendRem,
     closeCf, rt, openHist, closeHist
   });
