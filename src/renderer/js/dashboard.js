@@ -420,8 +420,18 @@ function _renderRecentStudents(students) {
       ? `<img src="file://${s.photo_path}" class="avatar" style="width:32px; height:32px; border-radius: 22%; object-fit: cover;" />`
       : `<span class="avatar" style="background:${palette.bg}; --avatar-glow:${palette.glow}; border-radius: 22%; color: #fff; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; font-size: 11px;">${initial}</span>`;
 
-    const badgeCls = s.feeStatus === 'paid' ? 'b-paid' : 'b-unpaid';
-    const badgeTxt = s.feeStatus === 'paid' ? 'Paid' : 'Unpaid';
+    let badgeCls, badgeTxt, badgeStyle = '';
+    if (s.feeStatus === 'paid') {
+      badgeCls = 'b-paid';
+      badgeTxt = 'Paid';
+    } else if (s.feeStatus === 'admission') {
+      badgeCls = 'b-admission';
+      badgeTxt = 'Admission';
+      badgeStyle = 'background:#f3e8ff;color:#a855f7;border:1px solid #d8b4fe;padding-left:8px;';
+    } else {
+      badgeCls = 'b-unpaid';
+      badgeTxt = 'Unpaid';
+    }
 
     return `
       <tr class="ag-entry">
@@ -429,7 +439,7 @@ function _renderRecentStudents(students) {
         <td><div style="display:flex; align-items:center; gap:10px;">${avatarHtml}${_esc(fullName)}</div></td>
         <td>${_esc(s.class) || '—'}</td>
         <td style="color:var(--muted)">${_esc(s.phone) || '—'}</td>
-        <td><span class="badge ${badgeCls}">${badgeTxt}</span></td>
+        <td><span class="badge ${badgeCls}" style="${badgeStyle}">${badgeTxt}</span></td>
       </tr>`;
   }).join('');
 }

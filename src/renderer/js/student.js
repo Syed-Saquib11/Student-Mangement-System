@@ -622,7 +622,7 @@ function openStudentModal(student) {
                  <span style="font-weight: 500; font-size: 13px;">${student?.feeStatus === 'paid' ? 'Paid' : 'Unpaid (Managed in Fees Tab)'}</span>
                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
               </div>
-              <input type="hidden" id="inp-fee" value="${esc(student?.feeStatus || 'pending')}" />
+              <input type="hidden" id="inp-fee" value="${esc(student?.feeStatus || 'admission')}" />
             </div>
             <div class="form-group">
               <label class="form-label edit-form-label">ADMISSION DATE</label>
@@ -1312,10 +1312,13 @@ function closeModal() {
 }
 
 function feeBadge(status) {
+  if (status === 'admission') {
+    return '<span class="badge student-fee-badge" style="background:#f3e8ff;color:#a855f7;border:1px solid #d8b4fe;padding-left:8px;">Admission</span>';
+  }
   if (status === 'paid') {
     return '<span class="badge badge-success student-fee-badge"><span class="fee-icon" aria-hidden="true">✓</span> Paid</span>';
   }
-  if (status === 'pending') {
+  if (status === 'unpaid' || status === 'pending') {
     return '<span class="badge badge-warning student-fee-badge"><span class="fee-icon" aria-hidden="true">✗</span> Unpaid</span>';
   }
   return `<span class="badge">${esc(status)}</span>`;

@@ -126,11 +126,11 @@ function triggerFeeUpdate(feeId) {
       if (monthlyFee <= 0) {
         newStatus = 'paid';
       } else if (periodsElapsed === 0) {
-        newStatus = 'paid';
+        newStatus = 'admission';
       } else if (balance <= 0) {
         newStatus = 'paid';
       } else {
-        newStatus = 'pending';
+        newStatus = 'unpaid';
       }
 
       const sqlUpdate = `UPDATE fees SET status = ? WHERE id = ?`;
@@ -149,11 +149,14 @@ function ensureFeeRecord(studentId, totalAmount, dueDate, initialStatus, callbac
   getFeeRecordForStudent(studentId, (err, row) => {
     if (err) return callback(err);
     if (!row) {
-      const calcStatus = (totalAmount <= 0) ? 'paid' : (initialStatus || 'pending');
+      const calcStatus = (totalAmount <= 0) ? 'paid' : (initialStatus || 'pre-admission');
       const sql = `INSERT INTO fees (studentId, totalAmount, dueDate, status) VALUES (?, ?, ?, ?)`;
       db.run(sql, [studentId, totalAmount, dueDate, calcStatus], function(err) {
         if (err) return callback(err);
-        callback(null, { id: this.lastID, studentId, totalAmount, dueDate, status: calcStatus });
+        triggerFeeUpdate(this.lastID);
+        setTimeout(() => {
+          callback(null, { id: this.lastID, studentId, totalAmount, dueDate, status: calcStatus });
+        }, 50);
       });
     } else {
       callback(null, row);

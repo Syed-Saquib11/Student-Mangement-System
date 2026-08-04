@@ -96,7 +96,7 @@ window.initFees = function () {
     if (Number(f.total) <= 0) return 'paid';
     const periods = getPeriodsElapsed(f.admissionDate);
     const missed = missedPeriods(f);
-    if (periods === 0) return 'paid';
+    if (periods === 0) return 'admission';
     if (missed === 0) return 'paid';
     if (missed === 1) return 'unpaid';
     return 'overdue';
@@ -171,7 +171,7 @@ window.initFees = function () {
 
     const fpCount = active.filter(f => gst(f) === 'paid').length;
     const unpCount = active.filter(f => gst(f) === 'unpaid' || gst(f) === 'overdue').length;
-    const dsCount = active.filter(f => gst(f) === 'due-soon').length;
+    const dsCount = active.filter(f => gst(f) === 'pre-admission').length;
 
     const p = totalOwedAll > 0 ? Math.round(totalCollected / totalOwedAll * 100) : 0;
 
@@ -228,19 +228,6 @@ window.initFees = function () {
           </svg>
         </div>
       </div>
-      ${dsCount > 0 ? `
-      <div class="sc" style="border-color:var(--blue,#3b82f6);" onclick="window.feesObj.setSF('due-soon')">
-        <div>
-          <div class="sl">Due Soon</div>
-          <div class="sv" style="color:var(--blue,#3b82f6);">${dsCount}</div>
-          <div class="ss">inside first billing window</div>
-        </div>
-        <div class="si" style="color:var(--blue,#3b82f6);">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-          </svg>
-        </div>
-      </div>` : ''}
     `;
 
     // UI update for removed progress section
@@ -403,10 +390,10 @@ window.initFees = function () {
       // Status-driven sub-text + row highlight + badge class
       let subText, subColor, isWarningRow = false, badgeClass;
       switch (st) {
-        case 'due-soon':
-          subText = `⏳ Due in ${daysLeft} days — ${periodDue}`;
-          subColor = 'color:var(--blue,#3b82f6)';
-          badgeClass = 'b-due-soon';
+        case 'admission':
+          subText = `⏳ Prepaid — Next due: ${getNextDue(f)}`;
+          subColor = 'color:#a855f7';
+          badgeClass = 'b-admission';
           break;
         case 'paid':
           subText = `✅ Next due: ${getNextDue(f)}`;
@@ -430,10 +417,10 @@ window.initFees = function () {
       }
 
       const dateDisplay = `<span class="dd ${isWarningRow ? 'd-ov' : 'd-ok'}">${periodDue || 'Not yet due'}<br><span style="font-size:10px;font-weight:700;${subColor}">${subText}</span></span>`;
-      const statusLabel = st.charAt(0).toUpperCase() + st.slice(1).replace('-', ' ');
+      const statusLabel = st === 'admission' ? 'Admission' : st.charAt(0).toUpperCase() + st.slice(1).replace('-', ' ');
 
       // Action buttons depend on status
-      const needsPayment = st === 'unpaid' || st === 'overdue' || st === 'due-soon';
+      const needsPayment = st === 'unpaid' || st === 'overdue';
       const actionBtns = `
         ${needsPayment ? `
           <button class="ab pa" style="padding:5px 8px;" onclick="window.feesObj.openDetPay('${f.id}')" title="Record Payment">
@@ -734,7 +721,7 @@ window.initFees = function () {
 
     let subText, subColor;
     switch (st) {
-      case 'due-soon': subText = `⏳ Due in ${daysLeft} days — ${periodDue}`; subColor = 'color:var(--blue,#3b82f6)'; break;
+      case 'admission': subText = `⏳ Prepaid — Next due: ${getNextDue(f)}`; subColor = 'color:#a855f7'; break;
       case 'paid': subText = `✅ Next due: ${getNextDue(f)}`; subColor = 'color:var(--green,#22c55e)'; break;
       case 'unpaid': subText = `⚠️ Unpaid — was due ${periodDue}`; subColor = 'color:var(--orange,#f97316)'; break;
       case 'overdue': subText = `🔴 ${missed} months overdue — ${fmt(b)} outstanding`; subColor = 'color:var(--red,#ef4444)'; break;
